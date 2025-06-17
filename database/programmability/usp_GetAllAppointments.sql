@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE dbo.usp_GetAllAppointments
+IF OBJECT_ID('dbo.usp_GetAllAppointments', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAllAppointments;
+GO
+
+CREATE PROCEDURE dbo.usp_GetAllAppointments
     @id_Usuario INT,
     @RolName NVARCHAR(50)
 AS
@@ -6,7 +10,7 @@ BEGIN
     SET NOCOUNT ON;
 
     -- Admins and Medicos can see all appointments
-    IF @RolName IN ('Administrador', 'Medico')
+        IF LOWER(@RolName) IN ('administrador', 'medico')
     BEGIN
         SELECT
             c.id_Cita, c.Fecha, c.Hora,
@@ -21,7 +25,7 @@ BEGIN
         ORDER BY c.Fecha DESC, c.Hora DESC;
     END
     -- Personal del Centro de Vacunación can see appointments for their assigned center
-    ELSE IF @RolName = 'Personal del Centro de Vacunación'
+        ELSE IF LOWER(@RolName) = 'personal del centro de vacunación'
     BEGIN
         DECLARE @id_CentroVacunacion INT;
         SELECT @id_CentroVacunacion = id_CentroVacunacion FROM dbo.Usuario WHERE id_Usuario = @id_Usuario;
@@ -40,7 +44,7 @@ BEGIN
         ORDER BY c.Fecha DESC, c.Hora DESC;
     END
     -- Tutors can see their own appointments and their children's appointments
-    ELSE IF @RolName = 'Tutor'
+        ELSE IF LOWER(@RolName) = 'tutor'
     BEGIN
         SELECT
             c.id_Cita, c.Fecha, c.Hora,

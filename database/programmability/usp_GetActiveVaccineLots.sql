@@ -1,13 +1,10 @@
-PRINT 'Creating Stored Procedure usp_GetActiveVaccineLots...';
-GO
-
 IF OBJECT_ID('dbo.usp_GetActiveVaccineLots', 'P') IS NOT NULL
-BEGIN
     DROP PROCEDURE dbo.usp_GetActiveVaccineLots;
-END
 GO
 
 CREATE PROCEDURE dbo.usp_GetActiveVaccineLots
+    @id_Vacuna INT = NULL,
+    @id_CentroVacunacion INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -27,18 +24,15 @@ BEGIN
         dbo.Fabricante f ON v.id_Fabricante = f.id_Fabricante
     WHERE 
         l.CantidadDisponible > 0
-        AND l.FechaCaducidad >= CAST(GETDATE() AS DATE) -- Compare with date part only to include lots expiring today
+        AND l.FechaCaducidad >= CAST(GETDATE() AS DATE)
+        AND (@id_Vacuna IS NULL OR l.id_VacunaCatalogo = @id_Vacuna)
+        AND (@id_CentroVacunacion IS NULL OR l.id_CentroVacunacion = @id_CentroVacunacion)
     ORDER BY
         v.Nombre, l.FechaCaducidad;
 
 END;
 GO
 
-PRINT 'Stored Procedure usp_GetActiveVaccineLots created/updated successfully.';
-GO
 
--- Example Usage:
-/*
-EXEC dbo.usp_GetActiveVaccineLots;
 */
 GO

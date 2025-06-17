@@ -23,13 +23,16 @@ interface Person {
 }
 
 interface VaccinationRecord {
-  id_Cita: number;
-  NombreVacuna: string;
-  FechaVacunacion: string;
-  NombreCentroVacunacion: string;
-  NombreMedico: string;
-  Lote: string;
-  Dosis: string;
+  id_Historico: number;
+  id_Nino: number;
+  FechaAplicacion: string;
+  DosisAplicada: string;
+  EdadAlMomento: string;
+  VacunaNombre: string;
+  FabricanteNombre: string;
+  LoteNumero: string;
+  PersonalSaludNombre: string;
+  NotasAdicionales: string;
 }
 
 export default function HistoryPage() {
@@ -60,8 +63,9 @@ export default function HistoryPage() {
 
   const handleShowHistory = () => {
     if (!selectedPerson) return;
+
     const [personType, personId] = selectedPerson.split('-');
-    fetchHistory(`/history/vaccinations?personType=${personType}&personId=${personId}`);
+    fetchHistory(`/api/history/vaccinations?personType=${personType}&personId=${personId}`);
   };
 
   const handleRowClick = (record: VaccinationRecord) => {
@@ -76,6 +80,17 @@ export default function HistoryPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Fecha no disponible';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Fecha inválida';
+    return new Intl.DateTimeFormat('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date);
   };
 
   const getSelectedPersonName = () => {
@@ -118,7 +133,7 @@ export default function HistoryPage() {
         </Card>
       </div>
 
-      {history.length > 0 && (
+      {selectedPerson && (
         <div className="printable-area mt-6">
           <Card>
             <CardHeader>
@@ -137,13 +152,27 @@ export default function HistoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((record) => (
-                    <TableRow key={record.id_Cita} onClick={() => handleRowClick(record)} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell>{record.NombreVacuna}</TableCell>
-                      <TableCell>{new Date(record.FechaVacunacion).toLocaleDateString()}</TableCell>
-                      <TableCell>{record.NombreCentroVacunacion}</TableCell>
+                  {historyLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        Cargando historial...
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : history.length > 0 ? (
+                    history.map((record) => (
+                      <TableRow key={record.id_Historico} onClick={() => handleRowClick(record)} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell>{record.VacunaNombre}</TableCell>
+                        <TableCell>{formatDate(record.FechaAplicacion)}</TableCell>
+                        <TableCell>{record.PersonalSaludNombre || 'No disponible'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        No se encontraron registros para esta persona.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

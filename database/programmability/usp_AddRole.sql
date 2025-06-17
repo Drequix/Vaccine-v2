@@ -3,6 +3,10 @@
 -- Create date: 2024-06-14
 -- Description: Adds a new role to the system.
 -- =============================================
+IF OBJECT_ID('dbo.usp_AddRole', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_AddRole;
+GO
+
 CREATE PROCEDURE usp_AddRole
     @RolName NVARCHAR(50)
 AS

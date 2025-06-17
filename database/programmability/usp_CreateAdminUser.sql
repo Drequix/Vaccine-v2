@@ -3,6 +3,10 @@
 -- Create date: 2025-06-14
 -- Description: Robustly creates a new user from the admin panel.
 -- =============================================
+IF OBJECT_ID('dbo.usp_CreateAdminUser', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateAdminUser;
+GO
+
 CREATE PROCEDURE [dbo].[usp_CreateAdminUser]
     @id_Rol INT,
     @Cedula_Usuario NVARCHAR(15),

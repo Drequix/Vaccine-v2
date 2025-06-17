@@ -54,7 +54,7 @@ export function Header() {
               Mi Vacunación
             </Link>
             <Link
-              href="/dashboard"
+              href="/ayuda"
               className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium flex items-center space-x-1 transition-colors"
             >
               <HelpCircle className="w-4 h-4" />
@@ -64,7 +64,7 @@ export function Header() {
 
           <div className="flex items-center space-x-3">
             <ModeToggle />
-            <Link href="/login">
+            <Link href="/auth">
               <Button className="bg-green-600 hover:bg-green-700 text-white">Iniciar sesión / Registrarse</Button>
             </Link>
           </div>

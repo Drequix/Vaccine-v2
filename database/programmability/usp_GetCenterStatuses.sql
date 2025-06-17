@@ -1,7 +1,11 @@
 -- =============================================
 -- Description: Retrieves all possible statuses for a vaccination center.
 -- =============================================
-CREATE OR ALTER PROCEDURE usp_GetCenterStatuses
+IF OBJECT_ID('dbo.usp_GetCenterStatuses', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetCenterStatuses;
+GO
+
+CREATE PROCEDURE usp_GetCenterStatuses
 AS
 BEGIN
     SET NOCOUNT ON;

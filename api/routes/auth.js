@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sql, poolPromise } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 const router = express.Router();
 
@@ -15,10 +15,14 @@ router.post('/login', async (req, res) => {
     }
 
     try {
-        const pool = await poolPromise;
+                const pool = getPool();
+        if (!pool) {
+            console.error('Login error: Database pool not available.');
+            return res.status(500).send({ message: 'Database connection is not available.' });
+        }
         const result = await pool.request()
             .input('LoginIdentifier', sql.NVarChar, email)
-            .execute('usp_GetUserForAuth');
+            .execute('usp_AuthenticateUser');
 
         if (result.recordset.length === 0) {
             return res.status(401).send({ message: 'Invalid credentials or user is inactive.' });

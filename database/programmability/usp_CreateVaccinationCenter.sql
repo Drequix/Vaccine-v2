@@ -2,7 +2,11 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[usp_CreateVaccinationCenter]
+IF OBJECT_ID('dbo.usp_CreateVaccinationCenter', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateVaccinationCenter;
+GO
+
+CREATE PROCEDURE [dbo].[usp_CreateVaccinationCenter]
     @NombreCentro NVARCHAR(100),
     @Direccion NVARCHAR(200),
     @id_Provincia INT,

@@ -4,14 +4,13 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AddAdminUserForm } from "@/components/admin/add-admin-user-form"
-import useApi from "@/hooks/use-api"
+import { useApi } from "@/hooks/use-api"
 
 interface User {
-  id_Usuario: number
-  Cedula_Usuario: string
-  Email: string
-  NombreRol: string
-  Estado: string
+  ID: number;
+  EMAIL: string;
+  ROLE: string;
+  STATUS: string;
 }
 
 export default function UsersPage() {
@@ -50,22 +49,22 @@ export default function UsersPage() {
 
       {users && (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Role</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+                        <tbody className="divide-y divide-gray-200 bg-white dark:bg-gray-900 dark:divide-gray-700">
               {users.map((user) => (
-                <tr key={user.id_Usuario}>
-                  <td className="whitespace-nowrap px-6 py-4">{user.id_Usuario}</td>
-                  <td className="whitespace-nowrap px-6 py-4">{user.Email}</td>
-                  <td className="whitespace-nowrap px-6 py-4">{user.NombreRol}</td>
-                  <td className="whitespace-nowrap px-6 py-4">{user.Estado}</td>
+                <tr key={user.ID}>
+                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 dark:text-gray-200">{user.ID}</td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 dark:text-gray-200">{user.EMAIL}</td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 dark:text-gray-200">{user.ROLE}</td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800 dark:text-gray-200">{user.STATUS}</td>
                 </tr>
               ))}
             </tbody>

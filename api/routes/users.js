@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { sql, poolPromise } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -44,7 +44,7 @@ router.post('/', [verifyToken, checkRole(['Administrador'])], async (req, res) =
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(Clave, saltRounds);
 
-        const pool = await poolPromise;
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Rol', sql.Int, numericRoleId)
             .input('Cedula_Usuario', sql.NVarChar(15), Cedula_Usuario)
@@ -70,8 +70,17 @@ router.post('/', [verifyToken, checkRole(['Administrador'])], async (req, res) =
 // GET /api/users - Get all users
 router.get('/', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
-        const pool = await poolPromise;
+        console.log('--- DEBUG: Entering GET /api/users route ---');
+        const pool = getPool();
+        console.log('--- DEBUG: Pool object retrieved:', !!pool);
+
+        if (!pool) {
+            console.error('--- FATAL: Pool is null or undefined after getPool() call! ---');
+            return res.status(500).send({ message: 'Database connection pool is not available.' });
+        }
+
         const result = await pool.request().execute('usp_GetAllUsers');
+        console.log('--- DEBUG: Full result from DB ---', JSON.stringify(result, null, 2));
         res.json(result.recordset);
     } catch (err) {
         console.error('SQL error on GET /api/users:', err);
@@ -83,7 +92,7 @@ router.get('/', [verifyToken, checkRole(['Administrador'])], async (req, res) =>
 router.get('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Usuario', sql.Int, id)
             .execute('usp_GetUserById');
@@ -101,7 +110,7 @@ router.get('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res)
 // GET /api/roles - Get all roles
 router.get('/roles', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
-        const pool = await poolPromise;
+        const pool = getPool();
                 const result = await pool.request().execute('usp_GetRoles');
         res.json(result.recordset);
     } catch (err) {
@@ -116,7 +125,7 @@ router.put('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res)
         const { id } = req.params;
         const { id_Rol, id_Estado, Cedula_Usuario, Email } = req.body;
 
-        const pool = await poolPromise;
+        const pool = getPool();
         await pool.request()
             .input('id_Usuario', sql.Int, id)
             .input('id_Rol', sql.Int, id_Rol)
@@ -136,7 +145,7 @@ router.put('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res)
 router.delete('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
+        const pool = getPool();
         await pool.request()
             .input('id_Usuario', sql.Int, id)
             .execute('usp_DeleteUser');
@@ -176,7 +185,7 @@ router.post('/admin-create', [verifyToken, checkRole(['Administrador'])], async 
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(Clave, saltRounds);
 
-        const pool = await poolPromise;
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Rol', sql.Int, numericRoleId)
             .input('Cedula_Usuario', sql.NVarChar(15), Cedula_Usuario)

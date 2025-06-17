@@ -7,6 +7,7 @@ interface RequestConfig {
   method?: HttpMethod;
   body?: any;
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 }
 
 export const useApi = <T = any>() => {
@@ -22,7 +23,7 @@ export const useApi = <T = any>() => {
       setError(null);
       setData(null);
 
-      const { method = 'GET', body, headers = {} } = config;
+      const { method = 'GET', body, headers = {}, signal } = config;
 
       const finalHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -38,13 +39,17 @@ export const useApi = <T = any>() => {
           method,
           headers: finalHeaders,
           body: body ? JSON.stringify(body) : null,
+          signal,
         });
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
-            logout();
+            console.error('Authentication error, logging out:', response.statusText)
+            logout()
+            return // Stop further execution
           }
           const errorData = await response.json().catch(() => ({ message: response.statusText }));
+          console.error('Error from API:', errorData); // Log the full error
           throw new Error(errorData.message || 'An error occurred');
         }
 
@@ -64,14 +69,19 @@ export const useApi = <T = any>() => {
         return result as T;
 
       } catch (err: any) {
-        setError(err.message || 'An unknown error occurred.');
-        throw err;
+        if (err.name === 'AbortError') {
+          console.log('Fetch aborted');
+        } else {
+          setError(err.message || 'An unknown error occurred.');
+          throw err;
+        }
       } finally {
         setLoading(false);
       }
     },
     [token, logout]
   );
+
 
   return { data, error, loading, request };
 };

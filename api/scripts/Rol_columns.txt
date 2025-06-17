@@ -1,0 +1,2 @@
+id_Rol (int)
+Rol (nvarchar(50))

@@ -1,17 +1,13 @@
--- Drop the old procedure if it exists
 IF OBJECT_ID('usp_AuthenticateUser', 'P') IS NOT NULL
     DROP PROCEDURE usp_AuthenticateUser;
 GO
 
--- Create or alter the new procedure for fetching user data for authentication
-CREATE OR ALTER PROCEDURE usp_GetUserForAuth
+CREATE PROCEDURE usp_AuthenticateUser
     @LoginIdentifier NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Selects user information, including the hashed password (Clave),
-    -- for authentication in the application layer.
     SELECT 
         u.id_Usuario,
         u.Email,

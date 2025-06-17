@@ -1,0 +1,13 @@
+{
+  "dev": {
+    "driver": "mssql",
+    "user": "vaccine_api",
+    "password": "VaccineAPI2024!",
+    "server": "MSI\\MSSQLSERVERYOVA",
+    "database": "Vaccine2",
+    "options": {
+      "encrypt": false,
+      "trustServerCertificate": true
+    }
+  }
+}

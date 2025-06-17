@@ -7,17 +7,18 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     server: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT, 10),
+    database: process.env.DB_DATABASE,
     options: {
-        encrypt: true, // For Azure SQL
-        trustServerCertificate: false
-    }
+        encrypt: process.env.DB_OPTIONS_ENCRYPT === 'true',
+        trustServerCertificate: process.env.DB_OPTIONS_TRUST_SERVER_CERTIFICATE === 'true',
+        instanceName: process.env.DB_INSTANCE
+    },
+    port: 1433
 };
 
 async function createAdmin() {
-    const adminEmail = 'admin@vaccinationsystem.com';
-    const adminPassword = 'password123';
+    const adminEmail = 'admin@example.com';
+    const adminPassword = 'AdminPass123!';
 
     let pool;
     try {

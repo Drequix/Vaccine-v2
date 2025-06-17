@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.usp_AddVaccineLot', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_AddVaccineLot;
+GO
+
 CREATE PROCEDURE dbo.usp_AddVaccineLot
     @id_VacunaCatalogo INT,
     @NumeroLote NVARCHAR(50),

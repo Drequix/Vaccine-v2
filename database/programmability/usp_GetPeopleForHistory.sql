@@ -1,7 +1,11 @@
 -- =============================================
 -- Description: Retrieves the tutor and their associated children for the vaccination history page.
 -- =============================================
-CREATE OR ALTER PROCEDURE usp_GetPeopleForHistory
+IF OBJECT_ID('dbo.usp_GetPeopleForHistory', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetPeopleForHistory;
+GO
+
+CREATE PROCEDURE usp_GetPeopleForHistory
     @id_Usuario INT
 AS
 BEGIN

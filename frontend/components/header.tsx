@@ -46,24 +46,53 @@ export default function Header() {
               <>
                 {user ? (
                   <>
-                    <Link
-                      href="/dashboard"
-                      className={`text-sm font-medium transition-colors hover:text-primary ${
-                        pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/appointments"
-                      className={`text-sm font-medium transition-colors hover:text-primary ${
-                        pathname === "/appointments" ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      Citas
-                    </Link>
-                    {user.role === "Tutor" && (
+                    {/* Medico Role */}
+                    {user.role?.toLowerCase() === "medico" && (
                       <>
+                        <Link
+                          href="/dashboard"
+                          className={`text-sm font-medium transition-colors hover:text-primary ${
+                            pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/medical/appointments"
+                          className={`text-sm font-medium transition-colors hover:text-primary ${
+                            pathname === "/medical/appointments" ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          Citas Médicas
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Vaccination Center Staff Role */}
+                    {user.role?.toLowerCase() === "personal del centro de vacunación" && (
+                      <>
+                        <Link
+                          href="/management/availability"
+                          className={`text-sm font-medium transition-colors hover:text-primary ${
+                            pathname === "/management/availability" ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          Disponibilidad
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Tutor Role */}
+                    {user.role?.toLowerCase() === "tutor" && (
+                      <>
+                        <Link
+                          href="/dashboard"
+                          className={`text-sm font-medium transition-colors hover:text-primary ${
+                            pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          Dashboard
+                        </Link>
                         <Link
                           href="/children"
                           className={`text-sm font-medium transition-colors hover:text-primary ${
@@ -82,9 +111,34 @@ export default function Header() {
                         </Link>
                       </>
                     )}
+
+                    {/* Other Authenticated Roles (Admin, Supervisor, etc.) */}
+                    {user.role?.toLowerCase() !== "medico" &&
+                      user.role?.toLowerCase() !== "tutor" &&
+                      user.role?.toLowerCase() !== "personal del centro de vacunación" && (
+                        <>
+                          <Link
+                            href="/dashboard"
+                            className={`text-sm font-medium transition-colors hover:text-primary ${
+                              pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
+                            }`}
+                          >
+                            Dashboard
+                          </Link>
+                          <Link
+                            href="/appointments"
+                            className={`text-sm font-medium transition-colors hover:text-primary ${
+                              pathname === "/appointments" ? "text-primary" : "text-muted-foreground"
+                            }`}
+                          >
+                            Citas
+                          </Link>
+                        </>
+                      )}
                   </>
                 ) : (
                   <>
+                    {/* Public links */}
                     <Link
                       href="/about"
                       className={`text-sm font-medium transition-colors hover:text-primary ${

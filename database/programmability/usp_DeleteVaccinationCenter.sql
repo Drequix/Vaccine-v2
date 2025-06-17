@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE usp_DeleteVaccinationCenter
+IF OBJECT_ID('usp_DeleteVaccinationCenter', 'P') IS NOT NULL
+    DROP PROCEDURE usp_DeleteVaccinationCenter;
+GO
+
+CREATE PROCEDURE usp_DeleteVaccinationCenter
     @id_CentroVacunacion INT
 AS
 BEGIN

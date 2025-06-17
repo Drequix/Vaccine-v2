@@ -3,36 +3,24 @@
 -- Drop tables in reverse order of creation due to dependencies, or handle dependencies in each drop
 -- For simplicity here, we'll drop and recreate, assuming sqlcmd handles batch execution correctly with GO.
 
-PRINT 'Dropping existing tables if they exist...';
+PRINT 'Disabling all constraints and dropping all tables...';
 GO
 
-DROP TABLE IF EXISTS HistoricoCita;
+-- Use a cursor to drop all foreign key constraints
+DECLARE @sql NVARCHAR(MAX) = N'';
+SELECT @sql += 'ALTER TABLE ' + QUOTENAME(cs.name) + '.' + QUOTENAME(ct.name) + ' DROP CONSTRAINT ' + QUOTENAME(fk.name) + ';' + CHAR(13) + CHAR(10)
+FROM sys.foreign_keys AS fk
+INNER JOIN sys.tables AS ct ON fk.parent_object_id = ct.object_id
+INNER JOIN sys.schemas AS cs ON ct.schema_id = cs.schema_id;
+EXEC sp_executesql @sql;
 GO
-DROP TABLE IF EXISTS HistoricoVacunas;
-GO
-DROP TABLE IF EXISTS CitaVacunacion;
-GO
-DROP TABLE IF EXISTS Lote;
-GO
-DROP TABLE IF EXISTS Vacuna;
-GO
-DROP TABLE IF EXISTS Fabricante;
-GO
-DROP TABLE IF EXISTS TutorNino;
-GO
-DROP TABLE IF EXISTS Nino;
-GO
-DROP TABLE IF EXISTS CentroVacunacion;
-GO
-DROP TABLE IF EXISTS Tutor;
-GO
-DROP TABLE IF EXISTS Usuario;
-GO
-DROP TABLE IF EXISTS EstadoCita;
-GO
-DROP TABLE IF EXISTS EstadoUsuario;
-GO
-DROP TABLE IF EXISTS Rol;
+
+-- Use a cursor to drop all tables
+DECLARE @sql2 NVARCHAR(MAX) = N'';
+SELECT @sql2 += 'DROP TABLE ' + QUOTENAME(cs.name) + '.' + QUOTENAME(ct.name) + ';' + CHAR(13) + CHAR(10)
+FROM sys.tables AS ct
+INNER JOIN sys.schemas AS cs ON ct.schema_id = cs.schema_id;
+EXEC sp_executesql @sql2;
 GO
 
 PRINT 'Creating tables...';
@@ -59,6 +47,29 @@ CREATE TABLE EstadoCita (
 );
 GO
 
+-- Table: EstadoCentro (Corrected from Plural)
+CREATE TABLE EstadoCentro (
+    id_Estado INT IDENTITY(1,1) PRIMARY KEY,
+    NombreEstado NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+-- Table: CentroVacunacion
+CREATE TABLE CentroVacunacion (
+    id_CentroVacunacion INT IDENTITY(1,1) PRIMARY KEY,
+    NombreCentro NVARCHAR(100) NOT NULL,
+    NombreCorto NVARCHAR(50),
+    Direccion NVARCHAR(200) NOT NULL,
+    id_Provincia INT NOT NULL,
+    id_Municipio INT NOT NULL,
+    Telefono NVARCHAR(20),
+    Director NVARCHAR(100),
+    Web NVARCHAR(100),
+    Capacidad INT,
+    id_Estado INT NOT NULL
+);
+GO
+
 -- Table: Usuario
 CREATE TABLE Usuario (
     id_Usuario INT IDENTITY(1,1) PRIMARY KEY,
@@ -67,8 +78,10 @@ CREATE TABLE Usuario (
     Cedula_Usuario NVARCHAR(15) UNIQUE,
     Email NVARCHAR(100) UNIQUE,
     Clave NVARCHAR(255) NOT NULL, -- Store hashed passwords
+    id_CentroVacunacion INT, -- Optional: Link user to a specific vaccination center
     CONSTRAINT FK_Usuario_Rol FOREIGN KEY (id_Rol) REFERENCES Rol(id_Rol),
-    CONSTRAINT FK_Usuario_EstadoUsuario FOREIGN KEY (id_Estado) REFERENCES EstadoUsuario(id_Estado)
+    CONSTRAINT FK_Usuario_EstadoUsuario FOREIGN KEY (id_Estado) REFERENCES EstadoUsuario(id_Estado),
+    CONSTRAINT FK_Usuario_CentroVacunacion FOREIGN KEY (id_CentroVacunacion) REFERENCES CentroVacunacion(id_CentroVacunacion)
 );
 GO
 
@@ -86,16 +99,27 @@ CREATE TABLE Tutor (
 );
 GO
 
--- Table: CentroVacunacion
-CREATE TABLE CentroVacunacion (
-    id_CentroVacunacion INT IDENTITY(1,1) PRIMARY KEY,
-    NombreCentro NVARCHAR(100) NOT NULL,
-    NombreCorto NVARCHAR(50),
-    Direccion NVARCHAR(200) NOT NULL,
-    Telefono NVARCHAR(20),
-    Director NVARCHAR(100),
-    Web NVARCHAR(100)
+-- Table: Provincia
+CREATE TABLE Provincia (
+    id_Provincia INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre NVARCHAR(100) NOT NULL UNIQUE
 );
+GO
+
+-- Table: Municipio
+CREATE TABLE Municipio (
+    id_Municipio INT IDENTITY(1,1) PRIMARY KEY,
+    id_Provincia INT NOT NULL,
+    Nombre NVARCHAR(100) NOT NULL,
+    CONSTRAINT FK_Municipio_Provincia FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia),
+    CONSTRAINT UQ_Municipio_Provincia_Nombre UNIQUE (id_Provincia, Nombre)
+);
+GO
+
+-- Add FKs to CentroVacunacion now that dependency tables are created
+ALTER TABLE CentroVacunacion ADD CONSTRAINT FK_CentroVacunacion_Provincia FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia);
+ALTER TABLE CentroVacunacion ADD CONSTRAINT FK_CentroVacunacion_Municipio FOREIGN KEY (id_Municipio) REFERENCES Municipio(id_Municipio);
+ALTER TABLE CentroVacunacion ADD CONSTRAINT FK_CentroVacunacion_Estado FOREIGN KEY (id_Estado) REFERENCES EstadoCentro(id_Estado);
 GO
 
 -- Table: Nino (Child) - Changed from Niño
@@ -149,13 +173,30 @@ GO
 CREATE TABLE Lote (
     id_LoteVacuna INT IDENTITY(1,1) PRIMARY KEY,
     id_VacunaCatalogo INT NOT NULL,
+    id_CentroVacunacion INT NOT NULL, -- Added FK to CentroVacunacion
     NumeroLote NVARCHAR(50) NOT NULL,
     FechaCaducidad DATE NOT NULL,
     CantidadInicial INT NOT NULL CHECK (CantidadInicial >= 0),
-    CantidadDisponible INT NOT NULL CHECK (CantidadDisponible >= 0), -- Removed cross-column check here
+    CantidadDisponible INT NOT NULL CHECK (CantidadDisponible >= 0),
     CONSTRAINT UQ_Lote_VacunaCatalogo_NumeroLote UNIQUE (id_VacunaCatalogo, NumeroLote),
     CONSTRAINT FK_Lote_Vacuna FOREIGN KEY (id_VacunaCatalogo) REFERENCES Vacuna(id_Vacuna),
-    CONSTRAINT CK_Lote_CantidadDisponible CHECK (CantidadDisponible <= CantidadInicial) -- Added as a table-level constraint
+    CONSTRAINT FK_Lote_CentroVacunacion FOREIGN KEY (id_CentroVacunacion) REFERENCES CentroVacunacion(id_CentroVacunacion),
+    CONSTRAINT CK_Lote_CantidadDisponible CHECK (CantidadDisponible <= CantidadInicial)
+);
+GO
+
+-- Table: DisponibilidadHoraria (Availability Schedule) - ADDED MISSING TABLE
+CREATE TABLE DisponibilidadHoraria (
+    id_Disponibilidad INT IDENTITY(1,1) PRIMARY KEY,
+    id_CentroVacunacion INT NOT NULL,
+    Fecha DATE NOT NULL,
+    HoraInicio TIME NOT NULL,
+    HoraFin TIME NOT NULL,
+    CuposTotales INT NOT NULL,
+    CuposDisponibles INT NOT NULL,
+    CONSTRAINT FK_Disponibilidad_CentroVacunacion FOREIGN KEY (id_CentroVacunacion) REFERENCES CentroVacunacion(id_CentroVacunacion) ON DELETE CASCADE,
+    CONSTRAINT CK_Disponibilidad_Cupos CHECK (CuposDisponibles <= CuposTotales AND CuposDisponibles >= 0),
+    CONSTRAINT UQ_Disponibilidad_Horario UNIQUE (id_CentroVacunacion, Fecha, HoraInicio)
 );
 GO
 
@@ -183,24 +224,25 @@ CREATE TABLE CitaVacunacion (
 );
 GO
 
--- Table: HistoricoVacunas (Vaccination History)
-CREATE TABLE HistoricoVacunas (
-    id_Historico INT IDENTITY(1,1) PRIMARY KEY,
-    id_Nino INT NOT NULL, -- Changed from id_Niño
-    id_Cita INT UNIQUE,
-    FechaAplicacion DATE NOT NULL,
-    DosisAplicada NVARCHAR(50) NOT NULL,
-    EdadAlMomento NVARCHAR(20),
-    VacunaNombre NVARCHAR(100) NOT NULL,
-    FabricanteNombre NVARCHAR(100),
-    LoteNumero NVARCHAR(50),
-    PersonalSaludNombre NVARCHAR(100),
-    FirmaDigital VARBINARY(MAX),
-    EdadRegistroMeses INT,
+-- Table: Vacunacion (Actual vaccination event, linking child, vaccine, lot, etc.)
+CREATE TABLE Vacunacion (
+    id_Vacunacion INT IDENTITY(1,1) PRIMARY KEY,
+    id_Cita INT UNIQUE NOT NULL, -- The appointment that led to this vaccination
+    id_Nino INT NOT NULL,
+    id_Vacuna INT NOT NULL,
+    id_Lote INT NOT NULL,
+    id_CentroVacunacion INT NOT NULL,
+    id_PersonalSalud INT NOT NULL,
+    FechaHoraAplicacion DATETIME NOT NULL,
+    Dosis VARCHAR(50),
     NotasAdicionales NVARCHAR(MAX),
     Alergias NVARCHAR(MAX),
-    CONSTRAINT FK_HistoricoVacunas_Nino FOREIGN KEY (id_Nino) REFERENCES Nino(id_Nino) ON DELETE CASCADE, -- Changed from id_Niño and Niño
-    CONSTRAINT FK_HistoricoVacunas_Cita FOREIGN KEY (id_Cita) REFERENCES CitaVacunacion(id_Cita) ON DELETE NO ACTION -- Changed from ON DELETE SET NULL
+    CONSTRAINT FK_Vacunacion_Cita FOREIGN KEY (id_Cita) REFERENCES CitaVacunacion(id_Cita) ON DELETE NO ACTION,
+    CONSTRAINT FK_Vacunacion_Nino FOREIGN KEY (id_Nino) REFERENCES Nino(id_Nino) ON DELETE CASCADE,
+    CONSTRAINT FK_Vacunacion_Vacuna FOREIGN KEY (id_Vacuna) REFERENCES Vacuna(id_Vacuna),
+    CONSTRAINT FK_Vacunacion_Lote FOREIGN KEY (id_Lote) REFERENCES LoteVacuna(id_LoteVacuna),
+    CONSTRAINT FK_Vacunacion_Centro FOREIGN KEY (id_CentroVacunacion) REFERENCES CentroVacunacion(id_CentroVacunacion),
+    CONSTRAINT FK_Vacunacion_Personal FOREIGN KEY (id_PersonalSalud) REFERENCES Usuario(id_Usuario)
 );
 GO
 
@@ -215,6 +257,23 @@ CREATE TABLE HistoricoCita (
     Hora TIME,
     Notas NVARCHAR(MAX),
     CONSTRAINT FK_HistoricoCita_Cita FOREIGN KEY (id_Cita) REFERENCES CitaVacunacion(id_Cita) ON DELETE CASCADE
+);
+GO
+
+PRINT 'Creating BitacoraAuditoria table...';
+GO
+
+-- Table: BitacoraAuditoria (Audit Log)
+CREATE TABLE BitacoraAuditoria (
+    id_Log INT PRIMARY KEY IDENTITY(1,1),
+    FechaHora DATETIME DEFAULT GETDATE(),
+    Usuario NVARCHAR(255), -- Email o nombre del usuario que realiza la acción
+    Accion NVARCHAR(50), -- CREATE, UPDATE, DELETE, VIEW, LOGIN, LOGOUT
+    Recurso NVARCHAR(100), -- El tipo de entidad afectada: Paciente, Cita, etc.
+    id_Recurso NVARCHAR(100), -- El ID del recurso afectado
+    Detalles NVARCHAR(MAX), -- Descripción de la acción
+    DireccionIP NVARCHAR(50),
+    UserAgent NVARCHAR(500)
 );
 GO
 
@@ -245,6 +304,26 @@ INSERT INTO EstadoCita (Estado) VALUES
     ('Cancelada por Centro'),
     ('No Asistio'),
     ('Reprogramada');
+GO
+
+INSERT INTO EstadosCentro (NombreEstado) VALUES
+    ('Activo'),
+    ('Inactivo'),
+    ('En Mantenimiento');
+GO
+
+-- Example provinces and municipalities for Dominican Republic
+INSERT INTO Provincia (Nombre) VALUES
+('Distrito Nacional'), ('Santo Domingo'), ('Santiago'), ('La Altagracia');
+GO
+
+INSERT INTO Municipio (id_Provincia, Nombre) VALUES
+(1, 'Distrito Nacional'),
+(2, 'Santo Domingo Este'),
+(2, 'Santo Domingo Oeste'),
+(2, 'Santo Domingo Norte'),
+(3, 'Santiago de los Caballeros'),
+(4, 'Higüey');
 GO
 
 PRINT 'Database schema created successfully with initial data.';

@@ -1,296 +1,255 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useApi } from "@/hooks/use-api"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Shield, Search, User, Edit, Plus, Trash2, Eye } from "lucide-react"
+import { Shield, Search, User, Edit, Plus, Trash2, Eye, AlertCircle } from "lucide-react"
 
-const mockAuditLogs = [
-  {
-    id: "1",
-    timestamp: "2024-01-20T10:30:00Z",
-    user: "Dr. Juan Pérez",
-    action: "CREATE",
-    resource: "Paciente",
-    resourceId: "PAT-001",
-    details: "Creó nuevo paciente: María González",
-    ipAddress: "192.168.1.100",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  },
-  {
-    id: "2",
-    timestamp: "2024-01-20T09:15:00Z",
-    user: "Dra. Ana López",
-    action: "UPDATE",
-    resource: "Vacunación",
-    resourceId: "VAC-045",
-    details: "Actualizó registro de vacunación COVID-19",
-    ipAddress: "192.168.1.101",
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-  },
-  {
-    id: "3",
-    timestamp: "2024-01-20T08:45:00Z",
-    user: "Admin Sistema",
-    action: "DELETE",
-    resource: "Centro",
-    resourceId: "CEN-003",
-    details: "Eliminó centro de vacunación inactivo",
-    ipAddress: "192.168.1.102",
-    userAgent: "Mozilla/5.0 (X11; Linux x86_64)",
-  },
-  {
-    id: "4",
-    timestamp: "2024-01-19T16:20:00Z",
-    user: "Dr. Carlos Ruiz",
-    action: "VIEW",
-    resource: "Reporte",
-    resourceId: "REP-012",
-    details: "Consultó reporte de cobertura mensual",
-    ipAddress: "192.168.1.103",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  },
-  {
-    id: "5",
-    timestamp: "2024-01-19T14:10:00Z",
-    user: "Digitador María",
-    action: "CREATE",
-    resource: "Cita",
-    resourceId: "CIT-089",
-    details: "Programó nueva cita de vacunación",
-    ipAddress: "192.168.1.104",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-  },
-]
+interface AuditLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  details: string;
+  ipAddress: string;
+}
 
 const getActionIcon = (action: string) => {
-  switch (action) {
+  switch (action.toUpperCase()) {
     case "CREATE":
-      return <Plus className="h-4 w-4 text-green-600" />
+      return <Plus className="h-4 w-4 mr-2" />
     case "UPDATE":
-      return <Edit className="h-4 w-4 text-blue-600" />
+      return <Edit className="h-4 w-4 mr-2" />
     case "DELETE":
-      return <Trash2 className="h-4 w-4 text-red-600" />
+      return <Trash2 className="h-4 w-4 mr-2" />
     case "VIEW":
-      return <Eye className="h-4 w-4 text-gray-600" />
+      return <Eye className="h-4 w-4 mr-2" />
+    case "LOGIN":
+      return <User className="h-4 w-4 mr-2" />
     default:
-      return <User className="h-4 w-4" />
+      return <Shield className="h-4 w-4 mr-2" />
   }
 }
 
-const getActionColor = (action: string) => {
-  switch (action) {
+const getActionVariant = (action: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch (action.toUpperCase()) {
     case "CREATE":
       return "default"
     case "UPDATE":
       return "secondary"
     case "DELETE":
       return "destructive"
-    case "VIEW":
-      return "outline"
     default:
       return "outline"
   }
 }
 
 export default function AuditLogPage() {
+  const { data: logs, loading, error, request: fetchLogs } = useApi<AuditLog[]>()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedAction, setSelectedAction] = useState("all")
   const [selectedResource, setSelectedResource] = useState("all")
 
-  const filteredLogs = mockAuditLogs.filter((log) => {
+  useEffect(() => {
+    fetchLogs('/api/admin/audit-log')
+  }, [fetchLogs])
+
+  const filteredLogs = (logs ?? []).filter((log) => {
     const matchesSearch =
       log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.resource.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesAction = selectedAction === "all" || log.action === selectedAction
-    const matchesResource = selectedResource === "all" || log.resource === selectedResource
+      log.ipAddress.includes(searchTerm)
+
+    const matchesAction = selectedAction === "all" || log.action.toUpperCase() === selectedAction.toUpperCase()
+    const matchesResource = selectedResource === "all" || log.resource.toLowerCase() === selectedResource.toLowerCase()
 
     return matchesSearch && matchesAction && matchesResource
   })
 
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Administración", href: "/admin" },
-    { label: "Bitácora de Auditoría" },
-  ]
+  const uniqueResources = [...new Set((logs ?? []).map(log => log.resource))]
 
   return (
-    <DashboardLayout breadcrumbs={breadcrumbs}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Bitácora de Auditoría
-          </h1>
-          <p className="text-muted-foreground">Registro completo de todas las acciones realizadas en el sistema</p>
+    <DashboardLayout>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Bitácora de Auditoría</h2>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Eventos</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockAuditLogs.length}</div>
-              <p className="text-xs text-muted-foreground">Últimas 24 horas</p>
+              <div className="text-2xl font-bold">{loading ? '...' : logs?.length ?? 0}</div>
+              <p className="text-xs text-muted-foreground">Registros en la bitácora</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Creaciones</CardTitle>
+              <Plus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {mockAuditLogs.filter((log) => log.action === "CREATE").length}
+                {loading ? '...' : logs?.filter((log) => log.action.toUpperCase() === "CREATE").length ?? 0}
               </div>
               <p className="text-xs text-muted-foreground">Nuevos registros</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Modificaciones</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Actualizaciones</CardTitle>
+              <Edit className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {mockAuditLogs.filter((log) => log.action === "UPDATE").length}
+                {loading ? '...' : logs?.filter((log) => log.action.toUpperCase() === "UPDATE").length ?? 0}
               </div>
-              <p className="text-xs text-muted-foreground">Actualizaciones</p>
+              <p className="text-xs text-muted-foreground">Modificaciones</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Eliminaciones</CardTitle>
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {mockAuditLogs.filter((log) => log.action === "DELETE").length}
+                {loading ? '...' : logs?.filter((log) => log.action.toUpperCase() === "DELETE").length ?? 0}
               </div>
               <p className="text-xs text-muted-foreground">Registros eliminados</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Filtros de Búsqueda</CardTitle>
-            <CardDescription>Filtre los registros de auditoría por diferentes criterios</CardDescription>
+            <CardTitle>Registros de Auditoría</CardTitle>
+            <CardDescription>
+              Un registro detallado de todas las acciones realizadas en el sistema.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Buscar</label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Usuario, acción o detalles..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="relative w-full">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por usuario, detalle o IP..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Acción</label>
-                <Select value={selectedAction} onValueChange={setSelectedAction}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas las acciones" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas las acciones</SelectItem>
-                    <SelectItem value="CREATE">Crear</SelectItem>
-                    <SelectItem value="UPDATE">Actualizar</SelectItem>
-                    <SelectItem value="DELETE">Eliminar</SelectItem>
-                    <SelectItem value="VIEW">Ver</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Recurso</label>
-                <Select value={selectedResource} onValueChange={setSelectedResource}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los recursos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los recursos</SelectItem>
-                    <SelectItem value="Paciente">Paciente</SelectItem>
-                    <SelectItem value="Vacunación">Vacunación</SelectItem>
-                    <SelectItem value="Centro">Centro</SelectItem>
-                    <SelectItem value="Cita">Cita</SelectItem>
-                    <SelectItem value="Reporte">Reporte</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedAction} onValueChange={setSelectedAction}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tipo de Acción" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las Acciones</SelectItem>
+                  <SelectItem value="CREATE">Crear</SelectItem>
+                  <SelectItem value="UPDATE">Actualizar</SelectItem>
+                  <SelectItem value="DELETE">Eliminar</SelectItem>
+                  <SelectItem value="VIEW">Ver</SelectItem>
+                  <SelectItem value="LOGIN">Login</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedResource} onValueChange={setSelectedResource}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tipo de Recurso" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los Recursos</SelectItem>
+                  {uniqueResources.map(resource => (
+                    <SelectItem key={resource} value={resource.toLowerCase()}>{resource}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Audit Log Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Registro de Eventos</CardTitle>
-            <CardDescription>Historial cronológico de todas las acciones del sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha/Hora</TableHead>
                     <TableHead>Usuario</TableHead>
                     <TableHead>Acción</TableHead>
                     <TableHead>Recurso</TableHead>
                     <TableHead>Detalles</TableHead>
-                    <TableHead>IP</TableHead>
+                    <TableHead>Fecha y Hora</TableHead>
+                    <TableHead>Dirección IP</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLogs.map((log) => (
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex justify-center items-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                          <span className="ml-4">Cargando registros...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {error && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-red-500">
+                        <div className="flex flex-col items-center">
+                          <AlertCircle className="h-10 w-10 mb-2" />
+                          <p className="font-semibold">Error al cargar la bitácora</p>
+                          <p className="text-sm">{typeof error === 'string' ? error : JSON.stringify(error)}</p>
+                          <p className="text-xs mt-2 text-muted-foreground">Asegúrate de que la API esté funcionando y la tabla 'BitacoraAuditoria' exista en la base de datos.</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!loading && !error && filteredLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell>
-                        <div className="text-sm">
-                          <div>{new Date(log.timestamp).toLocaleDateString()}</div>
-                          <div className="text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</div>
-                        </div>
+                        <div className="font-medium">{log.user}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {log.user}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getActionColor(log.action)} className="flex items-center gap-1 w-fit">
+                        <Badge variant={getActionVariant(log.action)} className="flex items-center">
                           {getActionIcon(log.action)}
                           {log.action}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{log.resource}</div>
-                          <div className="text-sm text-muted-foreground">{log.resourceId}</div>
-                        </div>
+                        <div className="text-sm text-muted-foreground">{log.resource} ({log.resourceId})</div>
                       </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="truncate" title={log.details}>
-                          {log.details}
-                        </div>
+                      <TableCell>{log.details}</TableCell>
+                      <TableCell>
+                        {new Date(log.timestamp).toLocaleString('es-ES', {
+                          year: 'numeric', month: '2-digit', day: '2-digit',
+                          hour: '2-digit', minute: '2-digit', second: '2-digit'
+                        })}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{log.ipAddress}</TableCell>
                     </TableRow>
                   ))}
+                  {!loading && !error && filteredLogs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex flex-col items-center">
+                          <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <p className="font-semibold">No se encontraron registros de auditoría</p>
+                          <p className="text-muted-foreground text-sm">Prueba a cambiar los filtros o realiza alguna acción en el sistema para generar nuevos registros.</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
 
-            {filteredLogs.length === 0 && (
+            {!loading && !error && filteredLogs.length === 0 && (
               <div className="text-center py-8">
                 <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">No se encontraron registros de auditoría</p>

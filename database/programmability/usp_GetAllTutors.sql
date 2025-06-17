@@ -1,4 +1,8 @@
-CREATE PROCEDURE usp_GetAllTutors
+IF OBJECT_ID('dbo.usp_GetAllTutors', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAllTutors;
+GO
+
+CREATE PROCEDURE dbo.usp_GetAllTutors
 AS
 BEGIN
     SET NOCOUNT ON;

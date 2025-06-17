@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.fn_CalculateAge', 'FN') IS NOT NULL
+    DROP FUNCTION dbo.fn_CalculateAge;
+GO
+
 CREATE FUNCTION dbo.fn_CalculateAge
 (
     @FechaNacimiento DATE,

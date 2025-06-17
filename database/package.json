@@ -1,0 +1,13 @@
+{
+  "name": "database-setup",
+  "version": "1.0.0",
+  "description": "Scripts to set up the vaccine project database.",
+  "main": "setup-database.js",
+  "scripts": {
+    "setup": "node setup-database.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "mssql": "^11.0.0"
+  }
+}

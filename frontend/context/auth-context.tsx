@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  id_CentroVacunacion?: number;
 }
 
 interface AuthContextType {
@@ -54,11 +55,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (newToken: string, newUser: User) => {
+    console.log("User object on login:", newUser); // Debug line
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    router.push('/dashboard');
+
+    // Redirect based on user role
+    console.log("User role on login:", newUser.role?.toLowerCase()); // Debug line
+    if (newUser.role?.toLowerCase() === 'personal del centro de vacunación') {
+      router.push('/management/availability');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const logout = () => {

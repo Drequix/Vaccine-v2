@@ -69,13 +69,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    // This effect runs on every render, satisfying the Rules of Hooks.
-    if (loading) return; // Wait until loading is complete
+    if (loading) {
+      return; // No hacer nada mientras se verifica la autenticación
+    }
 
+    // Si el usuario es un administrador y está en la página de login, redirigir al dashboard
+    if (isLoginPage && user && user.role?.trim().toLowerCase() === 'administrador') {
+      router.push('/admin');
+      return;
+    }
+
+    // Si el usuario no está en la página de login y no es un administrador, redirigir al login
     if (!isLoginPage && (!user || user.role?.trim().toLowerCase() !== 'administrador')) {
       router.push('/admin/login');
     }
-  }, [loading, user, router, isLoginPage, pathname]);
+  }, [loading, user, isLoginPage, router]);
 
   // --- Render Logic ---
 

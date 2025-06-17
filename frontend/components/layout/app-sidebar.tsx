@@ -33,36 +33,50 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const menuItems = {
+  medico: [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+      roles: ["medico"],
+    },
+    {
+      title: "Citas Medicas",
+      url: "/medical/appointments",
+      icon: Calendar,
+      roles: ["medico"],
+    },
+  ],
   general: [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
-      roles: ["medico", "digitador", "supervisor", "administrador"],
+      roles: ["digitador", "supervisor", "administrador"],
     },
     {
       title: "Pacientes",
       url: "/dashboard/patients",
       icon: Users,
-      roles: ["medico", "digitador", "supervisor", "administrador"],
+      roles: ["digitador", "supervisor", "administrador"],
     },
     {
       title: "Vacunación",
       url: "/dashboard/vaccination",
       icon: Syringe,
-      roles: ["medico", "digitador", "supervisor", "administrador"],
+      roles: ["digitador", "supervisor", "administrador"],
     },
     {
       title: "Citas",
-      url: "/dashboard/appointments",
+      url: "/appointments",
       icon: Calendar,
-      roles: ["medico", "digitador", "supervisor", "administrador"],
+      roles: ["digitador", "supervisor", "administrador"],
     },
     {
       title: "Alertas",
       url: "/dashboard/alerts",
       icon: AlertTriangle,
-      roles: ["medico", "digitador", "supervisor", "administrador"],
+      roles: ["digitador", "supervisor", "administrador"],
     },
   ],
   admin: [
@@ -127,26 +141,46 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>General</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.general.map(
-                (item) =>
-                  canAccess(item.roles) && (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ),
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {user?.role?.toLowerCase() === 'medico' ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Menú Médico</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.medico.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : (
+          <SidebarGroup>
+            <SidebarGroupLabel>General</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.general.map(
+                  (item) =>
+                    canAccess(item.roles) && (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild>
+                          <Link href={item.url}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ),
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Administración</SidebarGroupLabel>
@@ -170,45 +204,47 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src="/placeholder-user.jpg" />
-                    <AvatarFallback>
-                      {user?.name
-                        ? user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                        : user?.email?.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col text-left">
-                    <span className="text-sm font-medium">{user?.name ?? user?.email}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
-                  </div>
-                  <ChevronUp className="ml-auto h-4 w-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configuración</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar Sesión</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      {user?.role?.toLowerCase() !== 'medico' && (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton>
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src="/placeholder-user.jpg" />
+                      <AvatarFallback>
+                        {user?.name
+                          ? user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                          : user?.email?.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col text-left">
+                      <span className="text-sm font-medium">{user?.name ?? user?.email}</span>
+                      <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
+                    </div>
+                    <ChevronUp className="ml-auto h-4 w-4" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configuración</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
       <SidebarRail />
     </Sidebar>
   )

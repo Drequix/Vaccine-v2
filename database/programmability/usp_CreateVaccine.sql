@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE usp_CreateVaccine
+IF OBJECT_ID('dbo.usp_CreateVaccine', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_CreateVaccine;
+GO
+
+CREATE PROCEDURE usp_CreateVaccine
     @id_Fabricante INT,
     @Nombre NVARCHAR(100),
     @DosisLimite INT,

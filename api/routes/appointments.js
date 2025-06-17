@@ -1,14 +1,31 @@
 const express = require('express');
-const { sql, poolPromise } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+// GET /api/appointments/medical - Get detailed appointments for medical staff
+router.get('/medical', [verifyToken, checkRole(['Medico'])], async (req, res) => {
+    try {
+        const { id: userId } = req.user; 
+        const pool = getPool();
+        const result = await pool.request()
+            .input('id_Medico', sql.Int, userId) 
+            .execute('usp_GetMedicalAppointments');
+
+        res.json(result.recordset);
+
+    } catch (err) {
+        console.error('SQL error on GET /api/appointments/medical:', err); 
+        res.status(500).send({ message: 'Failed to retrieve medical appointments.', error: err.message });
+    }
+});
 
 // GET /api/appointments - Get appointments based on user role
 router.get('/', verifyToken, async (req, res) => {
     try {
         const { id: userId, role } = req.user;
-        const pool = await poolPromise;
+        const pool = getPool();
 
         const result = await pool.request()
             .input('id_Usuario', sql.Int, userId)
@@ -28,7 +45,7 @@ router.put('/:id', [verifyToken, checkRole(['Administrador', 'Digitador'])], asy
     try {
         const { id } = req.params;
         const { id_Vacuna, id_CentroVacunacion, Fecha, Hora, id_EstadoCita } = req.body;
-        const pool = await poolPromise;
+        const pool = getPool();
 
         await pool.request()
             .input('id_Cita', sql.Int, id)
@@ -60,7 +77,7 @@ router.post('/:id/record', [verifyToken, checkRole(['Administrador', 'Personal d
             Alergias 
         } = req.body;
 
-        const pool = await poolPromise;
+        const pool = getPool();
         const request = pool.request()
             .input('id_Cita', sql.Int, id)
             .input('id_PersonalSalud_Usuario', sql.Int, id_PersonalSalud_Usuario)
@@ -82,5 +99,7 @@ router.post('/:id/record', [verifyToken, checkRole(['Administrador', 'Personal d
         res.status(500).send({ message: 'Failed to record vaccination.', error: err.message });
     }
 });
+
+
 
 module.exports = router;

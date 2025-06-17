@@ -5,16 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/auth-context"
+import { useState, useEffect } from "react"
+import { useApi } from "@/hooks/use-api"
 import { Users, Calendar, AlertTriangle, TrendingUp, Syringe, Clock, CheckCircle } from "lucide-react"
-
-const mockStats = {
-  totalPatients: 1247,
-  todayAppointments: 23,
-  pendingAlerts: 8,
-  completedVaccinations: 156,
-  upcomingDoses: 45,
-  incompleteSchemes: 12,
-}
+import Link from "next/link"
 
 const mockAlerts = [
   {
@@ -61,8 +55,25 @@ const mockUpcomingAppointments = [
   },
 ]
 
+interface DashboardStats {
+  TotalPacientes: number;
+  CitasHoy: number;
+  TotalVacunaciones: number;
+  AlertasPendientes: number;
+}
+
 export default function AdminDashboardPage() {
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const { data: stats, loading, error, request: fetchStats } = useApi<DashboardStats>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchStats('/api/admin/dashboard-stats', { signal: controller.signal });
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchStats]);
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -83,8 +94,14 @@ export default function AdminDashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockStats.totalPatients.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
+              {loading ? (
+                <div className="text-2xl font-bold">Cargando...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.TotalPacientes?.toLocaleString() ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">Total de tutores y niños registrados</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -94,8 +111,14 @@ export default function AdminDashboardPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockStats.todayAppointments}</div>
-              <p className="text-xs text-muted-foreground">3 citas pendientes</p>
+              {loading ? (
+                <div className="text-2xl font-bold">Cargando...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.CitasHoy ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">Citas programadas para hoy</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -105,8 +128,14 @@ export default function AdminDashboardPage() {
               <Syringe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockStats.completedVaccinations}</div>
-              <p className="text-xs text-muted-foreground">Esta semana</p>
+              {loading ? (
+                <div className="text-2xl font-bold">Cargando...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.TotalVacunaciones?.toLocaleString() ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">Total de dosis aplicadas</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -116,8 +145,14 @@ export default function AdminDashboardPage() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockStats.pendingAlerts}</div>
-              <p className="text-xs text-muted-foreground">Requieren atención</p>
+              {loading ? (
+                <div className="text-2xl font-bold">Cargando...</div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.AlertasPendientes ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">Alertas que requieren atención</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -190,21 +225,29 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Button className="h-20 flex-col gap-2">
-                <Users className="h-6 w-6" />
-                Registrar Paciente
+              <Button asChild className="h-20 flex-col gap-2">
+                <Link href="/admin/users">
+                  <Users className="h-6 w-6" />
+                  Gestionar Usuarios
+                </Link>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <Syringe className="h-6 w-6" />
-                Nueva Vacunación
+              <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                <Link href="/admin/audit-log">
+                  <Syringe className="h-6 w-6" />
+                  Ver Auditoría
+                </Link>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <Calendar className="h-6 w-6" />
-                Agendar Cita
+              <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                <Link href="/appointments/new">
+                  <Calendar className="h-6 w-6" />
+                  Agendar Cita
+                </Link>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <TrendingUp className="h-6 w-6" />
-                Ver Reportes
+              <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                <Link href="/reports">
+                  <TrendingUp className="h-6 w-6" />
+                  Ver Reportes
+                </Link>
               </Button>
             </div>
           </CardContent>

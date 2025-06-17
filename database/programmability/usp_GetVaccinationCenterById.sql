@@ -1,4 +1,4 @@
-CREATE OR ALTER PROCEDURE usp_GetVaccinationCenterById
+CREATE OR REPLACE PROCEDURE usp_GetVaccinationCenterById
     @id_CentroVacunacion INT
 AS
 BEGIN

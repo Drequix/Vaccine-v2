@@ -1,7 +1,11 @@
 -- =============================================
 -- Description: Retrieves all provinces.
 -- =============================================
-CREATE OR ALTER PROCEDURE usp_GetProvinces
+IF OBJECT_ID('dbo.usp_GetProvinces', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetProvinces;
+GO
+
+CREATE PROCEDURE usp_GetProvinces
 AS
 BEGIN
     SET NOCOUNT ON;

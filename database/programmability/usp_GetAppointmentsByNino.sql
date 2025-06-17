@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.usp_GetAppointmentsByNino', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAppointmentsByNino;
+GO
+
 CREATE PROCEDURE dbo.usp_GetAppointmentsByNino
     @id_Nino INT
 AS

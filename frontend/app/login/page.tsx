@@ -14,19 +14,19 @@ import { Loader2 } from "lucide-react"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [isAdmin, setIsAdmin] = useState(false)
+  
   const { login, user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (user) {
-      if (user.role === "Administrador") {
-        setIsAdmin(true)
+      if (user.role?.trim().toLowerCase() === "administrador") {
+        router.push("/admin");
       } else {
-        router.push("/dashboard")
+        router.push("/dashboard");
       }
     }
-  }, [user, router])
+  }, [user, router]);
 
     const [error, setError] = useState("");
 
@@ -57,24 +57,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Card className="w-full max-w-md p-8 space-y-4">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Login as Administrator</CardTitle>
-            <CardDescription className="text-center">
-              You have successfully logged in as an administrator. Please choose your destination.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col space-y-4">
-            <Button onClick={() => router.push('/dashboard')}>Go to Personal Tutor View</Button>
-            <Button onClick={() => router.push('/admin/login')} variant="secondary">Proceed to Admin Portal</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

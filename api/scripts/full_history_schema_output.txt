@@ -1,0 +1,644 @@
+[DB INFO] Attempting to connect to SQL Server...
+[DB SUCCESS] Successfully connected!
+
+--- Inspecting Schema for: HistoricoVacunas ---
+Result:
+[
+  [
+    {
+      "Name": "HistoricoVacunas",
+      "Owner": "dbo",
+      "Type": "user table",
+      "Created_datetime": "2025-06-16T09:59:45.217Z"
+    }
+  ],
+  [
+    {
+      "Column_name": "id_Historico",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "id_Nino",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "id_Cita",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "FechaAplicacion",
+      "Type": "date",
+      "Computed": "no",
+      "Length": 3,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "DosisAplicada",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 100,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "EdadAlMomento",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 40,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "VacunaNombre",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 200,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "FabricanteNombre",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 200,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "LoteNumero",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 100,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "PersonalSaludNombre",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 200,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "FirmaDigital",
+      "Type": "varbinary",
+      "Computed": "no",
+      "Length": -1,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "no",
+      "FixedLenNullInSource": "yes",
+      "Collation": null
+    },
+    {
+      "Column_name": "EdadRegistroMeses",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "NotasAdicionales",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": -1,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "Alergias",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": -1,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    }
+  ],
+  [
+    {
+      "Identity": "id_Historico",
+      "Seed": 1,
+      "Increment": 1,
+      "Not For Replication": 0
+    }
+  ],
+  [
+    {
+      "RowGuidCol": "No rowguidcol column defined."
+    }
+  ],
+  [
+    {
+      "Data_located_on_filegroup": "PRIMARY"
+    }
+  ],
+  [
+    {
+      "index_name": "PK__Historic__51E85FA358971DDE",
+      "index_description": "clustered, unique, primary key located on PRIMARY",
+      "index_keys": "id_Historico"
+    },
+    {
+      "index_name": "UQ__Historic__4EA882C913EDB324",
+      "index_description": "nonclustered, unique, unique key located on PRIMARY",
+      "index_keys": "id_Cita"
+    }
+  ],
+  [
+    {
+      "constraint_type": "FOREIGN KEY",
+      "constraint_name": "FK_HistoricoVacunas_Cita",
+      "delete_action": "No Action",
+      "update_action": "No Action",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "id_Cita"
+    },
+    {
+      "constraint_type": " ",
+      "constraint_name": " ",
+      "delete_action": " ",
+      "update_action": " ",
+      "status_enabled": " ",
+      "status_for_replication": " ",
+      "constraint_keys": "REFERENCES Vaccine2.dbo.CitaVacunacion (id_Cita)"
+    },
+    {
+      "constraint_type": "FOREIGN KEY",
+      "constraint_name": "FK_HistoricoVacunas_Nino",
+      "delete_action": "Cascade",
+      "update_action": "No Action",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "id_Nino"
+    },
+    {
+      "constraint_type": " ",
+      "constraint_name": " ",
+      "delete_action": " ",
+      "update_action": " ",
+      "status_enabled": " ",
+      "status_for_replication": " ",
+      "constraint_keys": "REFERENCES Vaccine2.dbo.Nino (id_Nino)"
+    },
+    {
+      "constraint_type": "PRIMARY KEY (clustered)",
+      "constraint_name": "PK__Historic__51E85FA358971DDE",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "(n/a)",
+      "status_for_replication": "(n/a)",
+      "constraint_keys": "id_Historico"
+    },
+    {
+      "constraint_type": "UNIQUE (non-clustered)",
+      "constraint_name": "UQ__Historic__4EA882C913EDB324",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "(n/a)",
+      "status_for_replication": "(n/a)",
+      "constraint_keys": "id_Cita"
+    }
+  ]
+]
+
+--- Inspecting Schema for: Vacuna ---
+Result:
+[
+  [
+    {
+      "Name": "Vacuna",
+      "Owner": "dbo",
+      "Type": "user table",
+      "Created_datetime": "2025-06-16T09:59:45.233Z"
+    }
+  ],
+  [
+    {
+      "Column_name": "id_Vacuna",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "id_Fabricante",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "Nombre",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 200,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "DosisLimite",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "Tipo",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 100,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "Descripcion",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": -1,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    }
+  ],
+  [
+    {
+      "Identity": "id_Vacuna",
+      "Seed": 1,
+      "Increment": 1,
+      "Not For Replication": 0
+    }
+  ],
+  [
+    {
+      "RowGuidCol": "No rowguidcol column defined."
+    }
+  ],
+  [
+    {
+      "Data_located_on_filegroup": "PRIMARY"
+    }
+  ],
+  [
+    {
+      "index_name": "PK__Vacuna__D938EB1123103F45",
+      "index_description": "clustered, unique, primary key located on PRIMARY",
+      "index_keys": "id_Vacuna"
+    }
+  ],
+  [
+    {
+      "constraint_type": "FOREIGN KEY",
+      "constraint_name": "FK_Vacuna_Fabricante",
+      "delete_action": "No Action",
+      "update_action": "No Action",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "id_Fabricante"
+    },
+    {
+      "constraint_type": " ",
+      "constraint_name": " ",
+      "delete_action": " ",
+      "update_action": " ",
+      "status_enabled": " ",
+      "status_for_replication": " ",
+      "constraint_keys": "REFERENCES Vaccine2.dbo.Fabricante (id_Fabricante)"
+    },
+    {
+      "constraint_type": "PRIMARY KEY (clustered)",
+      "constraint_name": "PK__Vacuna__D938EB1123103F45",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "(n/a)",
+      "status_for_replication": "(n/a)",
+      "constraint_keys": "id_Vacuna"
+    }
+  ],
+  [
+    {
+      "Table is referenced by foreign key": "Vaccine2.dbo.CitaVacunacion: FK_CitaVacunacion_Vacuna"
+    },
+    {
+      "Table is referenced by foreign key": "Vaccine2.dbo.Lote: FK_Lote_Vacuna"
+    }
+  ]
+]
+
+--- Inspecting Schema for: CentroSalud ---
+Error executing command for CentroSalud: The object 'dbo.CentroSalud' does not exist in database 'Vaccine2' or is invalid for this operation.
+
+--- Inspecting Schema for: Lote ---
+Result:
+[
+  [
+    {
+      "Name": "Lote",
+      "Owner": "dbo",
+      "Type": "user table",
+      "Created_datetime": "2025-06-16T09:59:45.220Z"
+    }
+  ],
+  [
+    {
+      "Column_name": "id_LoteVacuna",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "id_VacunaCatalogo",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "NumeroLote",
+      "Type": "nvarchar",
+      "Computed": "no",
+      "Length": 100,
+      "Prec": "     ",
+      "Scale": "     ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    {
+      "Column_name": "FechaCaducidad",
+      "Type": "date",
+      "Computed": "no",
+      "Length": 3,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "CantidadInicial",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "CantidadDisponible",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "no",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    },
+    {
+      "Column_name": "id_CentroVacunacion",
+      "Type": "int",
+      "Computed": "no",
+      "Length": 4,
+      "Prec": "10   ",
+      "Scale": "0    ",
+      "Nullable": "yes",
+      "TrimTrailingBlanks": "(n/a)",
+      "FixedLenNullInSource": "(n/a)",
+      "Collation": null
+    }
+  ],
+  [
+    {
+      "Identity": "id_LoteVacuna",
+      "Seed": 1,
+      "Increment": 1,
+      "Not For Replication": 0
+    }
+  ],
+  [
+    {
+      "RowGuidCol": "No rowguidcol column defined."
+    }
+  ],
+  [
+    {
+      "Data_located_on_filegroup": "PRIMARY"
+    }
+  ],
+  [
+    {
+      "index_name": "PK__Lote__2C41622AAC389FCB",
+      "index_description": "clustered, unique, primary key located on PRIMARY",
+      "index_keys": "id_LoteVacuna"
+    },
+    {
+      "index_name": "UQ_Lote_VacunaCatalogo_NumeroLote",
+      "index_description": "nonclustered, unique, unique key located on PRIMARY",
+      "index_keys": "id_VacunaCatalogo, NumeroLote"
+    }
+  ],
+  [
+    {
+      "constraint_type": "CHECK on column CantidadDisponible",
+      "constraint_name": "CK__Lote__CantidadDi__46B27FE2",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "([CantidadDisponible]>=(0))"
+    },
+    {
+      "constraint_type": "CHECK on column CantidadInicial",
+      "constraint_name": "CK__Lote__CantidadIn__45BE5BA9",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "([CantidadInicial]>=(0))"
+    },
+    {
+      "constraint_type": "CHECK Table Level ",
+      "constraint_name": "CK_Lote_CantidadDisponible",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "([CantidadDisponible]<=[CantidadInicial])"
+    },
+    {
+      "constraint_type": "FOREIGN KEY",
+      "constraint_name": "FK_Lote_CentroVacunacion",
+      "delete_action": "No Action",
+      "update_action": "No Action",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "id_CentroVacunacion"
+    },
+    {
+      "constraint_type": " ",
+      "constraint_name": " ",
+      "delete_action": " ",
+      "update_action": " ",
+      "status_enabled": " ",
+      "status_for_replication": " ",
+      "constraint_keys": "REFERENCES Vaccine2.dbo.CentroVacunacion (id_CentroVacunacion)"
+    },
+    {
+      "constraint_type": "FOREIGN KEY",
+      "constraint_name": "FK_Lote_Vacuna",
+      "delete_action": "No Action",
+      "update_action": "No Action",
+      "status_enabled": "Enabled",
+      "status_for_replication": "Is_For_Replication",
+      "constraint_keys": "id_VacunaCatalogo"
+    },
+    {
+      "constraint_type": " ",
+      "constraint_name": " ",
+      "delete_action": " ",
+      "update_action": " ",
+      "status_enabled": " ",
+      "status_for_replication": " ",
+      "constraint_keys": "REFERENCES Vaccine2.dbo.Vacuna (id_Vacuna)"
+    },
+    {
+      "constraint_type": "PRIMARY KEY (clustered)",
+      "constraint_name": "PK__Lote__2C41622AAC389FCB",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "(n/a)",
+      "status_for_replication": "(n/a)",
+      "constraint_keys": "id_LoteVacuna"
+    },
+    {
+      "constraint_type": "UNIQUE (non-clustered)",
+      "constraint_name": "UQ_Lote_VacunaCatalogo_NumeroLote",
+      "delete_action": "(n/a)",
+      "update_action": "(n/a)",
+      "status_enabled": "(n/a)",
+      "status_for_replication": "(n/a)",
+      "constraint_keys": "id_VacunaCatalogo, NumeroLote"
+    }
+  ],
+  [
+    {
+      "Table is referenced by foreign key": "Vaccine2.dbo.CitaVacunacion: FK_CitaVacunacion_Lote"
+    }
+  ]
+]
+
+--- Inspecting Schema for: Dosis ---
+Error executing command for Dosis: The object 'dbo.Dosis' does not exist in database 'Vaccine2' or is invalid for this operation.
+[DB INFO] Connection closed.

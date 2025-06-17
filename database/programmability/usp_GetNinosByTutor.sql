@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.usp_GetNinosByTutor', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetNinosByTutor;
+GO
+
 CREATE PROCEDURE dbo.usp_GetNinosByTutor
     @id_Usuario INT
 AS

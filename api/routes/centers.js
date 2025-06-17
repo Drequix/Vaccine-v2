@@ -1,5 +1,5 @@
 const express = require('express');
-const { sql, poolPromise } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/vaccination-centers - Get all vaccination centers
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const pool = await poolPromise;
+    const pool = getPool();
     const result = await pool.request().execute('usp_GetAllVaccinationCenters');
 
     console.log('Raw data from DB:', JSON.stringify(result.recordset, null, 2));
@@ -15,7 +15,7 @@ router.get('/', verifyToken, async (req, res) => {
     // Map database columns to frontend-friendly keys to avoid breaking the client
     const centers = result.recordset.map(center => ({
       id_CentroVacunacion: center.id_CentroVacunacion,
-      Nombre: center.NombreCentro, // Aliasing from DB name to frontend name
+      Nombre: center.NombreCentro,
       Direccion: center.Direccion,
       Provincia: center.Provincia,
       Municipio: center.Municipio,
@@ -36,7 +36,7 @@ router.get('/', verifyToken, async (req, res) => {
 // GET /api/vaccination-centers/statuses - Get all possible center statuses
 router.get('/statuses', verifyToken, async (req, res) => {
   try {
-    const pool = await poolPromise;
+    const pool = getPool();
     const result = await pool.request().execute('usp_GetCenterStatuses');
     res.json(result.recordset);
   } catch (err) {
@@ -53,7 +53,7 @@ router.post('/', [verifyToken, checkRole(['Administrador'])], async (req, res) =
             Telefono, URLGoogleMaps, Capacidad, id_Estado
         } = req.body;
 
-        const pool = await poolPromise;
+        const pool = getPool();
         await pool.request()
             .input('NombreCentro', sql.NVarChar, Nombre)
             .input('Direccion', sql.NVarChar, Direccion)
@@ -82,7 +82,7 @@ router.put('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res)
             Telefono, URLGoogleMaps, Capacidad, id_Estado
         } = req.body;
 
-        const pool = await poolPromise;
+        const pool = getPool();
         await pool.request()
             .input('id_CentroVacunacion', sql.Int, id)
             .input('NombreCentro', sql.NVarChar, Nombre)
@@ -107,7 +107,7 @@ router.put('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res)
 router.delete('/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
+        const pool = getPool();
 
         await pool.request()
             .input('id_CentroVacunacion', sql.Int, id)

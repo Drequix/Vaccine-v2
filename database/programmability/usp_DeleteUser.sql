@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE usp_DeleteUser
+IF OBJECT_ID('usp_DeleteUser', 'P') IS NOT NULL
+    DROP PROCEDURE usp_DeleteUser;
+GO
+
+CREATE PROCEDURE usp_DeleteUser
     @id_Usuario INT
 AS
 BEGIN

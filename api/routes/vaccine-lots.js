@@ -3,11 +3,22 @@ const router = express.Router();
 const { sql, poolPromise } = require('../config/db');
 const { verifyToken, checkRole } = require('../middleware/authMiddleware');
 
-// GET /active - Get all active vaccine lots
+// GET /active - Get active vaccine lots, optionally filtered by vaccine and center
 router.get('/active', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera'])], async (req, res) => {
     try {
+        const { id_Vacuna, id_CentroVacunacion } = req.query;
         const pool = await poolPromise;
-        const result = await pool.request().execute('usp_GetActiveVaccineLots');
+        const request = pool.request();
+
+        if (id_Vacuna) {
+            request.input('id_Vacuna', sql.Int, id_Vacuna);
+        }
+        if (id_CentroVacunacion) {
+            request.input('id_CentroVacunacion', sql.Int, id_CentroVacunacion);
+        }
+
+        // Assumes usp_GetActiveVaccineLots can handle optional parameters
+        const result = await request.execute('usp_GetActiveVaccineLots');
         res.json(result.recordset);
     } catch (err) {
         console.error('SQL error on GET /api/vaccine-lots/active:', err);

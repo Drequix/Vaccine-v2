@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE usp_DeleteVaccine
+IF OBJECT_ID('dbo.usp_DeleteVaccine', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_DeleteVaccine;
+GO
+
+CREATE PROCEDURE usp_DeleteVaccine
     @id_Vacuna INT
 AS
 BEGIN

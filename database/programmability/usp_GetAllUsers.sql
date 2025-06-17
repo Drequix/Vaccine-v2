@@ -1,4 +1,8 @@
-CREATE OR ALTER PROCEDURE usp_GetAllUsers
+IF OBJECT_ID('dbo.usp_GetAllUsers', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAllUsers;
+GO
+
+CREATE PROCEDURE dbo.usp_GetAllUsers
 AS
 BEGIN
     SET NOCOUNT ON;

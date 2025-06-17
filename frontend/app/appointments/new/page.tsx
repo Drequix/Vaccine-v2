@@ -15,7 +15,7 @@ import { Loader2, Calendar } from "lucide-react"
 
 interface VaccinationCenter {
   id_CentroVacunacion: number
-  NombreCentro: string
+  Nombre: string
 }
 
 interface Vaccine {
@@ -129,18 +129,20 @@ export default function NewAppointmentPage() {
   }
 
   return (
-    <div className="container py-10">
-      <Card className="mx-auto w-full max-w-lg">
+    <div className="container mx-auto max-w-2xl py-8">
+      <Card>
         <CardHeader>
-          <CardTitle>Agendar Nueva Cita</CardTitle>
-          <CardDescription>Complete el formulario para agendar una nueva cita de vacunación</CardDescription>
+          <CardTitle>Agendar Nueva Cita de Vacunación</CardTitle>
+          <CardDescription>Complete el formulario para programar una nueva cita.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+
+
             {user?.role === "Tutor" && (
               <div className="space-y-2">
-                <Label>¿Para quién es la cita?</Label>
-                <Select onValueChange={(value) => setAppointmentFor(value as "self" | "child")} defaultValue="self">
+                <Label>¿La cita es para usted o para un niño?</Label>
+                <Select onValueChange={(value: "self" | "child") => setAppointmentFor(value)} defaultValue="self">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -152,10 +154,10 @@ export default function NewAppointmentPage() {
               </div>
             )}
 
-            {appointmentFor === "child" && user?.role === "Tutor" && (
+            {appointmentFor === "child" && (
               <div className="space-y-2">
                 <Label htmlFor="id_Nino">Niño</Label>
-                <Select onValueChange={(value) => handleChange("id_Nino", value)} required={appointmentFor === "child"}>
+                <Select onValueChange={(value) => handleChange("id_Nino", value)} required={appointmentFor === 'child'}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione un niño" />
                   </SelectTrigger>
@@ -163,7 +165,7 @@ export default function NewAppointmentPage() {
                     {children && children.length > 0 ? (
                       children.map((child) => (
                         <SelectItem key={child.id_Nino} value={child.id_Nino.toString()}>
-                          {child.Nombres} {child.Apellidos}
+                          {`${child.Nombres} ${child.Apellidos}`}
                         </SelectItem>
                       ))
                     ) : (
@@ -183,11 +185,17 @@ export default function NewAppointmentPage() {
                   <SelectValue placeholder="Seleccione un centro" />
                 </SelectTrigger>
                 <SelectContent>
-                  {centers?.map((center) => (
-                    <SelectItem key={center.id_CentroVacunacion} value={center.id_CentroVacunacion.toString()}>
-                      {center.NombreCentro}
+                  {centers && centers.length > 0 ? (
+                    centers.map((center) => (
+                      <SelectItem key={center.id_CentroVacunacion} value={center.id_CentroVacunacion.toString()}>
+                        {center.Nombre}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-centers" disabled>
+                      No hay centros disponibles
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -235,8 +243,6 @@ export default function NewAppointmentPage() {
                 />
               </div>
             </div>
-
-
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={formLoading}>
@@ -244,7 +250,7 @@ export default function NewAppointmentPage() {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Agendando cita...
-                </>
+                </> 
               ) : (
                 "Agendar Cita"
               )}

@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.usp_GetNinoDetailsById', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetNinoDetailsById;
+GO
+
 CREATE PROCEDURE dbo.usp_GetNinoDetailsById
     @id_Nino INT
 AS

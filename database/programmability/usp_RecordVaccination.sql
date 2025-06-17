@@ -7,6 +7,10 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.usp_RecordVaccination', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_RecordVaccination;
+GO
+
 CREATE PROCEDURE dbo.usp_RecordVaccination
     @id_Cita INT,
     @id_PersonalSalud_Usuario INT, -- User ID of the logged-in health personnel

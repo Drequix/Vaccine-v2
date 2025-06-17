@@ -1,0 +1,16 @@
+Column Names from HistoricoVacunas:
+
+id_Historico
+id_Nino
+id_Cita
+FechaAplicacion
+DosisAplicada
+EdadAlMomento
+VacunaNombre
+FabricanteNombre
+LoteNumero
+PersonalSaludNombre
+FirmaDigital
+EdadRegistroMeses
+NotasAdicionales
+Alergias

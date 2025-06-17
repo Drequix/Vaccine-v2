@@ -1,9 +1,8 @@
-/****** Object:  StoredProcedure [dbo].[usp_GetAllVaccinationCenters]    Script Date: 14/6/2025 7:33:54 p. m. ******/
-SET ANSI_NULLS ON
+IF OBJECT_ID('dbo.usp_GetAllVaccinationCenters', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.usp_GetAllVaccinationCenters;
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE OR ALTER PROCEDURE [dbo].[usp_GetAllVaccinationCenters]
+
+CREATE PROCEDURE [dbo].[usp_GetAllVaccinationCenters]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -27,7 +26,7 @@ BEGIN
     LEFT JOIN 
         dbo.Municipio m ON cv.id_Municipio = m.id_Municipio
     LEFT JOIN 
-        dbo.EstadosCentro e ON cv.id_Estado = e.id_Estado;
+        dbo.EstadoCentro e ON cv.id_Estado = e.id_Estado;
 
 END;
 GO

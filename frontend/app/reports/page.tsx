@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ReportsCharts } from "@/components/reports/reports-charts"
-import { ReportsMap } from "@/components/reports/reports-map"
-import { ReportsTable } from "@/components/reports/reports-table"
-import { Download, Filter, BarChart3, Map, Table } from "lucide-react"
+import { useState } from "react";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ReportsCharts } from "@/components/reports/reports-charts";
+import { ReportsMap } from "@/components/reports/reports-map";
+import { ReportsTable } from "@/components/reports/reports-table";
+import { Download, Filter, BarChart3, Map, Table } from "lucide-react";
 
 export default function ReportsPage() {
-  const [activeView, setActiveView] = useState("charts")
-  const [dateRange, setDateRange] = useState({ from: "", to: "" })
-  const [selectedCenter, setSelectedCenter] = useState("all")
-  const [selectedVaccine, setSelectedVaccine] = useState("all")
+  const [activeView, setActiveView] = useState("charts");
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [selectedCenter, setSelectedCenter] = useState("all");
+  const [selectedVaccine, setSelectedVaccine] = useState("all");
 
-  const breadcrumbs = [{ label: "Dashboard", href: "/dashboard" }, { label: "Reportes" }]
+  const breadcrumbs = [{ label: "Dashboard", href: "/dashboard" }, { label: "Reportes" }];
 
   const exportReport = (format: string) => {
-    console.log(`Exporting report in ${format} format`)
-  }
+    console.log(`Exporting report in ${format} format`);
+  };
 
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
@@ -128,5 +128,5 @@ export default function ReportsPage() {
         {activeView === "table" && <ReportsTable />}
       </div>
     </DashboardLayout>
-  )
+  );
 }

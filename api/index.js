@@ -1,12 +1,18 @@
+// Forcing a reload at 2025-06-17T15:47:39-04:00
 // Load environment variables
 require('dotenv').config();
 
 // Import required modules
 const express = require('express');
 const cors = require('cors');
-const sql = require('mssql');
+const { connectDB, getPool, sql } = require('./config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const centersRoutes = require('./routes/centers');
+const usersRoutes = require('./routes/users');
+const historyRoutes = require('./routes/history');
+const adminRoutes = require('./routes/admin');
+const authRoutes = require('./routes/auth');
 
 // Initialize Express app
 const app = express();
@@ -31,9 +37,12 @@ app.use(cors({
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// --- Log DB Config for Debugging ---
-const { password, ...dbConfigForLogging } = dbConfig;
-console.log('[DB CONFIG] Using database configuration:', JSON.stringify(dbConfigForLogging, null, 2));
+// Mount Routers for specific API resource paths
+app.use('/api/vaccination-centers', centersRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
 
 // --- Request Logger Middleware ---
 app.use((req, res, next) => {
@@ -41,23 +50,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Database configuration for Azure SQL Database
-const dbConfig = {
-    server: process.env.DB_AZURE_SERVER_NAME,
-    database: process.env.DB_DATABASE,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    options: {
-        encrypt: process.env.DB_OPTIONS_ENCRYPT === 'true',
-        trustServerCertificate: process.env.DB_OPTIONS_TRUST_SERVER_CERTIFICATE === 'true'
-    },
-    pool: {
-        max: 10,
-        min: 0,
-        idleTimeoutMillis: 30000
-    },
-    port: 1433 // Default port for Azure SQL
+// Start the server only after a successful database connection
+const startServer = async () => {
+  try {
+    await connectDB(); // Establish database connection
+    app.listen(port, () => {
+      console.log(`[API START] Server running on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error("[FATAL ERROR] Failed to start server due to database connection issues.", error);
+    process.exit(1);
+  }
 };
+
+startServer();
 
 // --- JWT Verification Middleware ---
 const verifyToken = (req, res, next) => {
@@ -96,86 +102,10 @@ const checkRole = (roles) => {
     };
 };
 
-// --- Authentication Endpoints ---
-
-app.post('/api/auth/login', async (req, res) => {
-    const { LoginIdentifier: email } = req.body;
-    const password = req.body.Password || req.body.password;
-
-    console.log(`[LOGIN ATTEMPT] User: ${email}`);
-
-    if (!email || !password) {
-        console.log('[LOGIN FAIL] Missing credentials');
-        return res.status(400).send({ message: 'Login identifier and password are required.' });
-    }
-
-    try {
-        console.log('[LOGIN DB] Connecting to database...');
-        const pool = await sql.connect(dbConfig);
-        console.log('[LOGIN DB] Executing stored procedure usp_GetUserForAuth...');
-        const result = await pool.request()
-            .input('LoginIdentifier', sql.NVarChar, email)
-            .execute('usp_GetUserForAuth');
-        console.log('[LOGIN DB] Stored procedure executed.');
-
-        if (result.recordset.length === 0) {
-            console.log('[LOGIN FAIL] Invalid credentials or inactive user.');
-            return res.status(401).send({ message: 'Invalid credentials or user is inactive.' });
-        }
-
-        const user = result.recordset[0];
-        console.log('[LOGIN AUTH] User found. Comparing password...');
-
-        const passwordMatch = await bcrypt.compare(password, user.Clave);
-        if (!passwordMatch) {
-            console.log('[LOGIN FAIL] Password does not match.');
-            return res.status(401).send({ message: 'Invalid credentials.' });
-        }
-
-        console.log('[LOGIN SUCCESS] Password matches. Generating JWT...');
-        // Generate JWT
-        const token = jwt.sign(
-            { id: user.id_Usuario, email: user.Email, role: user.NombreRol },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        res.json({ message: 'Login successful', token, user: { id: user.id_Usuario, email: user.Email, role: user.NombreRol } });
-
-    } catch (err) {
-        console.error('Login error:', err);
-        res.status(500).send({ message: 'Server error during login.' });
-    }
-});
-
-// --- User Management Endpoints (Admin Only) ---
-
-// POST /api/users - Create a new user
-app.post('/api/users', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
-    try {
-        const { id_Rol, Cedula_Usuario, Email, Clave } = req.body;
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(Clave, saltRounds);
-
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input('id_Rol', sql.Int, id_Rol)
-            .input('Cedula_Usuario', sql.NVarChar(15), Cedula_Usuario)
-            .input('Email', sql.NVarChar(100), Email)
-            .input('Clave', sql.NVarChar(255), hashedPassword)
-            .execute('usp_CreateUser');
-
-        res.status(201).json({ message: 'User created successfully.', userId: result.recordset[0].id_Usuario });
-    } catch (err) {
-        console.error('SQL error on POST /api/users:', err);
-        res.status(500).send({ message: 'Failed to create user.', error: err.message });
-    }
-});
-
 // GET /api/users - Get all users
 app.get('/api/users', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetAllUsers');
         res.json(result.recordset);
     } catch (err) {
@@ -188,7 +118,7 @@ app.get('/api/users', [verifyToken, checkRole(['Administrador'])], async (req, r
 app.get('/api/users/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Usuario', sql.Int, id)
             .execute('usp_GetUserById');
@@ -206,7 +136,7 @@ app.get('/api/users/:id', [verifyToken, checkRole(['Administrador'])], async (re
 // GET /api/roles - Get all roles
 app.get('/api/roles', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().query('SELECT id_Rol, Rol FROM Rol');
         res.json(result.recordset);
     } catch (err) {
@@ -221,7 +151,7 @@ app.put('/api/users/:id', [verifyToken, checkRole(['Administrador'])], async (re
         const { id } = req.params;
         const { id_Rol, id_Estado, Cedula_Usuario, Email } = req.body;
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Usuario', sql.Int, id)
             .input('id_Rol', sql.Int, id_Rol)
@@ -241,7 +171,7 @@ app.put('/api/users/:id', [verifyToken, checkRole(['Administrador'])], async (re
 app.delete('/api/users/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Usuario', sql.Int, id)
             .execute('usp_DeleteUser');
@@ -262,54 +192,33 @@ app.get('/', (req, res) => {
 
 // --- Vaccination Center Endpoints ---
 
-// GET /api/vaccination-centers - Get all vaccination centers
-app.get('/api/vaccination-centers', verifyToken, async (req, res) => {
-  try {
-    const pool = await sql.connect(dbConfig);
-    const result = await pool.request().execute('usp_GetAllVaccinationCenters');
 
-    console.log('Raw data from DB:', JSON.stringify(result.recordset, null, 2));
-    
-    // Map database columns to frontend-friendly keys to avoid breaking the client
-    const centers = result.recordset.map(center => ({
-      id_CentroVacunacion: center.id_CentroVacunacion,
-      Nombre: center.NombreCentro, // Aliasing from DB name to frontend name
-      Direccion: center.Direccion,
-      Provincia: center.Provincia,
-      Municipio: center.Municipio,
-      Telefono: center.Telefono,
-      Director: center.Director,
-      Web: center.Web,
-      Capacidad: center.Capacidad,
-      Estado: center.NombreEstado // Corrected to match the final stored procedure
-    }));
-
-    res.json(centers);
-  } catch (err) {
-    console.error('SQL error on GET /api/vaccination-centers:', err);
-    res.status(500).send({ message: 'Failed to retrieve vaccination centers.', error: err.message });
-  }
-});
 
 // --- Appointment Endpoints ---
 
 // GET /api/appointments - Get appointments based on user role
 app.get('/api/appointments', verifyToken, async (req, res) => {
-    console.log('[DEBUG] /api/appointments user:', req.user);
+    console.log('[APPOINTMENTS] Request received for user:', req.user);
     try {
         const { id: userId, role } = req.user;
-        const pool = await sql.connect(dbConfig);
-                const request = pool.request();
 
-        if (role.toLowerCase() === 'tutor') {
-            request.input('id_Usuario', sql.Int, userId);
-        } else if (!['administrador', 'medico'].includes(role.toLowerCase())) {
-            return res.status(403).send({ message: 'Your role is not authorized to view appointments.' });
+        if (!userId || !role) {
+            return res.status(400).send({ message: 'User ID and role are missing from token.' });
         }
-        // For admins and medicos, id_Usuario will be null, and the SP will return all appointments.
-        request.input('RolName', sql.NVarChar, role); // Pass the role to the stored procedure
 
+        console.log(`[APPOINTMENTS] Fetching for user ID: ${userId}, Role: ${role}`);
+        
+        const pool = getPool();
+        const request = pool.request();
+        
+        // Pass parameters to the stored procedure
+        request.input('id_Usuario', sql.Int, userId);
+        request.input('RolName', sql.NVarChar, role);
+
+        console.log('[APPOINTMENTS] Executing usp_GetAllAppointments...');
         const result = await request.execute('usp_GetAllAppointments');
+        
+        console.log(`[APPOINTMENTS] Found ${result.recordset.length} appointments.`);
         res.json(result.recordset);
 
     } catch (err) {
@@ -323,7 +232,7 @@ app.get('/api/appointments', verifyToken, async (req, res) => {
 // GET /api/vaccination-centers - Get all vaccination centers
 app.get('/api/vaccination-centers', verifyToken, async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetAllVaccinationCenters');
 
         console.log('Raw data from DB:', JSON.stringify(result.recordset, null, 2));
@@ -331,7 +240,7 @@ app.get('/api/vaccination-centers', verifyToken, async (req, res) => {
         // Map database columns to frontend-friendly keys to avoid breaking the client
         const centers = result.recordset.map(center => ({
             id_CentroVacunacion: center.id_CentroVacunacion,
-            Nombre: center.NombreCentro, // Aliasing from DB name to frontend name
+            Nombre: center.NombreCentro, 
             Direccion: center.Direccion,
             Provincia: center.Provincia,
             Municipio: center.Municipio,
@@ -339,7 +248,7 @@ app.get('/api/vaccination-centers', verifyToken, async (req, res) => {
             Director: center.Director,
             Web: center.Web,
             Capacidad: center.Capacidad,
-            Estado: center.NombreEstado // Corrected to match the final stored procedure
+            Estado: center.NombreEstado 
         }));
 
         res.json(centers);
@@ -354,7 +263,7 @@ app.get('/api/vaccination-centers', verifyToken, async (req, res) => {
 // GET /api/vaccines - Get all vaccines
 app.get('/api/vaccines', verifyToken, async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetVaccines');
         res.json(result.recordset);
     } catch (err) {
@@ -369,7 +278,7 @@ app.get('/api/vaccines', verifyToken, async (req, res) => {
 app.get('/api/history/people', verifyToken, checkRole(['Tutor']), async (req, res) => {
     try {
         const { id: id_Usuario } = req.user;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Usuario', sql.Int, id_Usuario)
             .execute('usp_GetPeopleForHistory');
@@ -395,7 +304,7 @@ app.get('/api/history/vaccinations', verifyToken, checkRole(['Tutor']), async (r
             return res.status(400).send({ message: 'Person ID and Person Type are required.' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('PersonId', sql.Int, personId)
             .input('PersonType', sql.NVarChar(10), personType)
@@ -420,7 +329,7 @@ app.get('/api/tutors/:id/children', [verifyToken, checkRole(['Tutor', 'Administr
             return res.status(403).send({ message: 'Forbidden: You can only view your own children.' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Usuario', sql.Int, id_Usuario)
             .execute('usp_GetNinosByTutor');
@@ -447,7 +356,7 @@ app.post('/api/tutors', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('Cedula_Tutor', sql.NVarChar(15), NumeroIdentificacion)
             .input('Nombres_Tutor', sql.NVarChar(100), Nombres)
@@ -479,7 +388,7 @@ app.get('/api/tutors/:tutorId/ninos', [verifyToken, checkRole(['Administrador', 
     console.log(`Accessed GET /api/tutors/:tutorId/ninos with params: ${JSON.stringify(req.params)}`);
     try {
         const { tutorId } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Tutor', sql.Int, tutorId)
             .execute('usp_GetNinosByTutor');
@@ -501,7 +410,7 @@ app.get('/api/tutors/:userId/children', [verifyToken, checkRole(['Tutor', 'Admin
             return res.status(403).send({ message: 'Forbidden: You can only view your own children.' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Tutor', sql.Int, userId)
             .execute('usp_GetNinosByTutor');
@@ -525,7 +434,7 @@ app.post('/api/ninos', [verifyToken, checkRole(['Tutor', 'Administrador'])], asy
     console.log(`Accessed POST /api/ninos with body: ${JSON.stringify(req.body)}`);
     try {
         const { id_Tutor, Nombres, Apellidos, Genero, CodigoIdentificacionPropio, FechaNacimiento, PaisNacimiento } = req.body;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const request = pool.request()
             .input('id_Tutor', sql.Int, id_Tutor)
             .input('Nombres', sql.NVarChar(100), Nombres)
@@ -546,7 +455,7 @@ app.get('/api/ninos/:ninoId', [verifyToken, checkRole(['Administrador', 'Medico'
     console.log(`Accessed GET /api/ninos/:ninoId with params: ${JSON.stringify(req.params)}`);
     try {
         const { ninoId } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Nino', sql.Int, ninoId)
             .execute('usp_GetNinoDetailsById');
@@ -566,7 +475,7 @@ app.get('/api/ninos/:ninoId/appointments', [verifyToken, checkRole(['Administrad
     console.log(`Accessed GET /api/ninos/:ninoId/appointments with params: ${JSON.stringify(req.params)}`);
     try {
         const { ninoId } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Nino', sql.Int, ninoId)
             .execute('usp_GetAppointmentsByNino');
@@ -583,7 +492,7 @@ app.put('/api/ninos/:id', [verifyToken, checkRole(['Administrador', 'Medico'])],
         const { id } = req.params;
         const { Nombres, Apellidos, FechaNacimiento, Genero, CodigoIdentificacionPropio, id_CentroSaludAsignado } = req.body;
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Nino', sql.Int, id)
             .input('Nombres', sql.NVarChar(100), Nombres)
@@ -605,7 +514,7 @@ app.put('/api/ninos/:id', [verifyToken, checkRole(['Administrador', 'Medico'])],
 app.delete('/api/ninos/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Nino', sql.Int, id)
             .execute('usp_DeleteNino');
@@ -632,7 +541,7 @@ app.post('/api/appointments', [verifyToken], async (req, res) => {
         // Using a neutral date '1970-01-01' to ensure only the time is relevant.
         const timeAsDateObject = new Date(`1970-01-01T${HoraCita}:00`);
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const request = pool.request()
             // Handle optional id_Nino, passing null if not provided or explicitly null.
             .input('id_Nino', sql.Int, (id_Nino === undefined || id_Nino === null) ? null : id_Nino)
@@ -665,24 +574,14 @@ app.post('/api/appointments', [verifyToken], async (req, res) => {
     }
 });
 
-// GET /api/appointments - Get all appointments
-app.get('/api/appointments', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera', 'Digitador', 'Tutor'])], async (req, res) => {
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request().execute('usp_GetAllAppointments');
-        res.json(result.recordset);
-    } catch (err) {
-        console.error('SQL error on GET /api/appointments:', err);
-        res.status(500).send({ message: 'Failed to retrieve appointments.', error: err.message });
-    }
-});
+// The duplicate endpoint that was here has been removed to fix a critical bug.
 
 // PUT /api/appointments/:id - Update an appointment
 app.put('/api/appointments/:id', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera'])], async (req, res) => {
     try {
         const { id } = req.params;
         const { id_Vacuna, id_CentroVacunacion, Fecha, Hora, id_EstadoCita } = req.body;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Cita', sql.Int, id)
             .input('id_Vacuna', sql.Int, id_Vacuna)
@@ -702,7 +601,7 @@ app.put('/api/appointments/:id', [verifyToken, checkRole(['Administrador', 'Medi
 app.get('/api/appointments/:id', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera', 'Digitador', 'Tutor'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Cita', sql.Int, id)
             .execute('usp_GetAppointmentById');
@@ -720,7 +619,7 @@ app.get('/api/appointments/:id', [verifyToken, checkRole(['Administrador', 'Medi
 app.delete('/api/appointments/:id', [verifyToken, checkRole(['Administrador', 'Medico'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_Cita', sql.Int, id)
             .execute('usp_DeleteAppointment');
@@ -736,7 +635,7 @@ app.put('/api/appointments/:appointmentId/status', [verifyToken, checkRole(['Med
     try {
         const { appointmentId } = req.params;
         const { id_EstadoCita } = req.body;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const request = pool.request()
             .input('id_Cita', sql.Int, appointmentId)
             .input('id_EstadoCita', sql.Int, id_EstadoCita);
@@ -753,7 +652,7 @@ app.put('/api/appointments/:appointmentId/status', [verifyToken, checkRole(['Med
 // GET /api/locations/provinces - Get all provinces
 app.get('/api/locations/provinces', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera', 'Digitador'])], async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().query('SELECT id_Provincia, Nombre FROM Provincia ORDER BY Nombre');
         res.json(result.recordset);
     } catch (err) {
@@ -766,7 +665,7 @@ app.get('/api/locations/provinces', [verifyToken, checkRole(['Administrador', 'M
 app.get('/api/locations/municipalities/:provinceId', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera', 'Digitador'])], async (req, res) => {
     try {
         const { provinceId } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request()
             .input('id_Provincia', sql.Int, provinceId)
             .execute('usp_GetMunicipiosByProvincia');
@@ -782,7 +681,7 @@ app.get('/api/locations/municipalities/:provinceId', [verifyToken, checkRole(['A
 // GET /api/centers/statuses - Get all center statuses
 app.get('/api/centers/statuses', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().query('SELECT id_Estado, NombreEstado FROM EstadosCentro');
         res.json(result.recordset);
     } catch (err) {
@@ -796,7 +695,7 @@ app.post('/api/vaccination-centers', [verifyToken, checkRole(['Administrador'])]
     try {
         const { NombreCentro, Direccion, id_Provincia, id_Municipio, Telefono, Director, Web, Capacidad, id_Estado } = req.body;
         
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('NombreCentro', sql.NVarChar(100), NombreCentro)
             .input('Direccion', sql.NVarChar(200), Direccion)
@@ -822,7 +721,7 @@ app.put('/api/vaccination-centers/:id', [verifyToken, checkRole(['Administrador'
         const { id } = req.params;
         const { NombreCentro, Direccion, id_Provincia, id_Municipio, Telefono, Director, Web, Capacidad, id_Estado } = req.body;
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         await pool.request()
             .input('id_CentroVacunacion', sql.Int, id)
             .input('NombreCentro', sql.NVarChar(100), NombreCentro)
@@ -859,7 +758,7 @@ app.put('/api/vaccination-centers/:id', [verifyToken, checkRole(['Administrador'
 app.delete('/api/vaccination-centers/:id', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
 
         const statusResult = await pool.request()
             .input('NombreEstado', sql.NVarChar, 'Inactivo')
@@ -885,7 +784,7 @@ app.delete('/api/vaccination-centers/:id', [verifyToken, checkRole(['Administrad
 // --- Dashboard Endpoints ---
 app.get('/api/dashboard/stats', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera', 'Digitador'])], async (req, res) => {
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetDashboardStats');
         res.json(result.recordset[0]);
     } catch (err) {
@@ -898,7 +797,7 @@ app.get('/api/dashboard/stats', [verifyToken, checkRole(['Administrador', 'Medic
 app.get('/api/vaccine-lots/active', [verifyToken, checkRole(['Administrador', 'Medico', 'Enfermera'])], async (req, res) => {
     console.log('Accessed GET /api/vaccine-lots/active endpoint');
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetActiveVaccineLots');
         res.json(result.recordset);
     } catch (err) {
@@ -911,7 +810,7 @@ app.post('/api/vaccine-lots', [verifyToken, checkRole(['Administrador', 'Medico'
     console.log(`Accessed POST /api/vaccine-lots with body: ${JSON.stringify(req.body)}`);
     try {
         const { id_Vacuna, NumeroLote, FechaFabricacion, FechaVencimiento, CantidadInicial, id_CentroVacunacion } = req.body;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const request = pool.request()
             .input('id_Vacuna', sql.Int, id_Vacuna)
             .input('NumeroLote', sql.NVarChar(50), NumeroLote)
@@ -932,7 +831,7 @@ app.post('/api/vaccinations', [verifyToken, checkRole(['Medico', 'Enfermera'])],
     console.log(`Accessed POST /api/vaccinations with body: ${JSON.stringify(req.body)}`);
     try {
         const { id_Cita, id_LoteVacuna, FechaAplicacion, EdadAlVacunar, id_PersonalSalud, Observaciones } = req.body;
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const request = pool.request()
             .input('id_Cita', sql.Int, id_Cita)
             .input('id_LoteVacuna', sql.Int, id_LoteVacuna)
@@ -962,7 +861,7 @@ app.post('/api/children', [verifyToken, checkRole(['Tutor'])], async (req, res) 
             return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
 
         // Step 3: Use id_Usuario to find the correct id_Tutor from the Tutor table.
         const tutorResult = await pool.request()
@@ -1004,7 +903,7 @@ app.post('/api/children/link', [verifyToken, checkRole(['Tutor'])], async (req, 
             return res.status(400).send({ message: 'Activation code is required.' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
 
         // Look up id_Tutor from id_Usuario
         const tutorResult = await pool.request()
@@ -1038,21 +937,14 @@ app.post('/api/children/link', [verifyToken, checkRole(['Tutor'])], async (req, 
 app.get('/api/children/tutor', [verifyToken, checkRole(['Tutor'])], async (req, res) => {
     try {
         const { id: id_Usuario } = req.user;
-        const pool = await sql.connect(dbConfig);
-
-        const tutorResult = await pool.request()
-            .input('id_Usuario', sql.Int, id_Usuario)
-            .query('SELECT id_Tutor FROM Tutor WHERE id_Usuario = @id_Usuario');
-
-        if (tutorResult.recordset.length === 0) {
-            return res.status(200).json([]); // Return empty array if no tutor profile
-        }
-        const id_Tutor = tutorResult.recordset[0].id_Tutor;
+        console.log(`[CHILDREN] Fetching children for user ID: ${id_Usuario}`);
+        const pool = getPool();
 
         const childrenResult = await pool.request()
-            .input('id_Tutor', sql.Int, id_Tutor)
+            .input('id_Usuario', sql.Int, id_Usuario)
             .execute('usp_GetNinosByTutor');
 
+        console.log(`[CHILDREN] Successfully fetched ${childrenResult.recordset.length} children for user ID ${id_Usuario}.`);
         res.status(200).json(childrenResult.recordset);
 
     } catch (err) {
@@ -1065,7 +957,7 @@ app.get('/api/children/tutor', [verifyToken, checkRole(['Tutor'])], async (req, 
 app.get('/api/tutors', [verifyToken, checkRole(['Administrador'])], async (req, res) => {
     console.log('Accessed GET /api/tutors endpoint');
     try {
-        const pool = await sql.connect(dbConfig);
+        const pool = getPool();
         const result = await pool.request().execute('usp_GetAllTutors');
         res.json(result.recordset);
     } catch (err) {
@@ -1073,38 +965,3 @@ app.get('/api/tutors', [verifyToken, checkRole(['Administrador'])], async (req, 
         res.status(500).send({ message: 'Failed to retrieve tutors.', error: err.message });
     }
 });
-
-// --- SERVER STARTUP ---
-
-// Function to connect to the database and start the server
-async function startServer() {
-    console.log('[SERVER START] Attempting to start server and connect to database...');
-    try {
-        console.log('[DB CONFIG] Database configuration being used:', {
-            server: dbConfig.server,
-            database: dbConfig.database,
-            user: dbConfig.user,
-            options: dbConfig.options,
-            port: dbConfig.port
-        });
-        console.log('[DB CONNECT] Attempting to connect to SQL Server...');
-        await sql.connect(dbConfig); // Establishes the connection pool
-        console.log('[DB SUCCESS] Connected to SQL Server successfully!');
-
-        const server = app.listen(port, () => {
-            console.log(`[SERVER READY] Vaccination API server listening at http://localhost:${port}`);
-        });
-
-        // Handle server errors
-        server.on('error', (error) => {
-            console.error('[SERVER ERROR] An error occurred:', error);
-            process.exit(1);
-        });
-
-    } catch (err) {
-        console.error('[FATAL ERROR] Failed to connect to SQL Server or start server:', err);
-        process.exit(1); // Exit the process if DB connection fails
-    }
-}
-
-startServer();

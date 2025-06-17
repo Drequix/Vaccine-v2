@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { CenterFormModal } from "@/components/centers/center-form-modal"
 import { Plus, Search, Edit, Eye, MapPin, Phone, Users, AlertCircle, Loader } from "lucide-react"
-import useApi from "@/hooks/use-api"
+import { useApi } from "@/hooks/use-api"
 
 // Interface based on the database schema and UI requirements
 interface VaccinationCenter {
@@ -32,7 +32,7 @@ export default function CentersPage() {
   const [centers, setCenters] = useState<VaccinationCenter[] | null>(null)
 
   // Use the API hook to fetch centers
-    const { loading: isLoading, error, request: callApi } = useApi()
+  const { loading: isLoading, error, request: callApi } = useApi()
 
   const fetchCenters = useCallback(async () => {
     try {
